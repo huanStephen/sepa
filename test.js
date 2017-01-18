@@ -62,3 +62,31 @@
     });
 
 })();
+
+(function() {
+    var sepa = org.eocencle.sepa;
+
+    var Ctrl = new sepa.Class([sepa.Controller, sepa.CRemote]);
+
+    Ctrl.include({
+        config : {
+            test : {
+                path : '/sepa/test',
+                params : {
+                    name : 'miss'
+                },
+                callback : 'testResult'
+            }
+        },
+
+        load : function() {
+            this.component('remote', ['test']);
+        },
+
+        testResult : function(data) {
+
+        }
+    });
+
+    new Ctrl('body');
+})();

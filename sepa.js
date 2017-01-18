@@ -92,6 +92,8 @@
             klass.prototype._static = klass;
         }
 
+        klass.prototype.init = function() {};
+
         klass.fn = klass.prototype;
 
         klass.extend = function(obj) {
@@ -298,14 +300,14 @@
          * 保存到本地
          * @param name  保存名称
          */
-        saveLocal : function(name){
+        saveLocal : function(name) {
             localStorage[name] = this.toJSON();
         },
         /**
          * 读取本地信息
          * @param name	保存名称
          */
-        loadLocal : function(name){
+        loadLocal : function(name) {
             this.load(JSON.parse(localStorage[name] || '{}'));
         },
         /**
@@ -317,6 +319,123 @@
         }
     });
 
+    /**
+     * Control class
+     * 控制类
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _Controller = org.eocencle.sepa.Controller = new _Class();
 
+    _Controller.extend({
+        //扩展组件
+        _component : {}
+    });
+
+    _Controller.include({
+        //配置
+        config : {},
+
+        init : function(element) {
+            this._el = $(element);
+            this.refreshElements();
+            this.delegateEvents();
+            this.pickBlocks();
+            this.load && this.load();
+        },
+
+        $ : function(selector) {
+            return $(selector, this._el);
+        },
+        //根据第一个空格来分隔
+        eventSplitter : /^(\w+)\s*(.*)$/,
+
+        delegateEvents: function() {
+            for(var key in this.events) {
+                var methodName = this.events[key];
+                var method = this.proxy(this[methodName]);
+                var match = key.match(this.eventSplitter);
+                if(match == undefined) throw(this.events[key] + ' Bind error!');
+                var eventName = match[1];
+                var selector = match[2];
+                if(selector === '') {
+                    this._el.bind(eventName, method);
+                } else {
+                    if(selector.substring(0,1) === '#') {
+                        this.$(selector).bind(eventName, method);
+                    } else {
+                        this._el.delegate(selector, eventName, method);
+                    }
+                }
+            }
+        },
+
+        refreshElements : function() {
+            for(var key in this.elements)
+                this[this.elements[key]] = this.$(key);
+        },
+
+        pickBlocks : function() {
+            for(var key in this.blocks)
+                this[this.blocks[key]] = this.$(this[key]()).clone();
+        },
+
+        component : function(func, paramArray, packet) {
+            if(!packet || !$.trim(packet)) packet = '_common';
+
+            try {
+                return this._static.component[packet][func].apply(this, paramArray);
+            } catch (e) {
+                throw('Component call error!');
+            }
+        }
+    });
+
+    /**
+     * 远程调用模块
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _CRemote = org.eocencle.sepa.CRemote = new _Class();
+
+    _CRemote.extend({
+        component : {
+            _common : {
+                remote : function(cfgName) {
+                    var defcfg = {
+                        path : '',
+                        method : 'get',
+                        params : {},
+                        callback : ''
+                    };
+
+                    if(!$.trim(cfgName)) throw('No configuration!');
+
+                    var cfg = this.config[cfgName];
+                    if(!cfg) throw('No configuration!');
+
+                    if(!cfg.path || !$.trim(cfg.path)) throw('Required path!');
+                    if(!cfg.callback || !$.trim(cfg.callback)) throw('Required callback!');
+
+                    var config = Object.assign(defcfg, cfg);
+
+                    if(!config.method || !$.trim(config.method) ||
+                        $.trim(config.method).toLocaleLowerCase() === 'get') {
+                        if(config.params && $.trim(config.params)) {
+                            $.get(config.path, config.params, this[config.callback]);
+                        } else {
+                            $.get(config.path, this[config.callback]);
+                        }
+                    } else {
+                        if(config.params && $.trim(config.params)) {
+                            $.post(config.path, config.params, this[config.callback]);
+                        } else {
+                            $.post(config.path, this[config.callback]);
+                        }
+                    }
+                }
+            }
+        }
+    });
 
 })(jQuery);
