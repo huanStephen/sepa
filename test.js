@@ -32,7 +32,7 @@
         {id : 2, name : '李四', age : 20, sex : false, hobby : '排球'},
         {id : 3, name : '王五', age : 25, sex : true, hobby : '篮球'}
     ]);
-    debugger;
+
     $('.populate').children('span').text(UserEntity.count());
 
     var all = UserEntity.all();
@@ -49,5 +49,16 @@
 
     var json = UserEntity.find(3).toJSON();
     $('.toJSON').children('span').text(json);
+
+    UserEntity.find(1).saveLocal('user');
+
+    u = new UserEntity();
+
+    u.loadLocal('user');
+    $('.loadLocal').children('span').text(u.id + '--' + u.name + '--' + u.age + '--' + u.sex + '--' + u.hobby);
+
+    $('.removeLocalBtn').click(function() {
+        u.removeLocal('user');
+    });
 
 })();
