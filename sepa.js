@@ -544,19 +544,29 @@
 
                 bind : function(name, path) {
                     var func = this.proxy(function(value) {
-                        var config = {
-                            path : '',
-                            method : 'get',
-                            params : {},
-                            callback : '',
-                            check : 0
-                        };
+                        var cfgName = '_chk' + name;
+                        var cfg = this.config[cfgName];
+                        if(cfg) {
+                            cfg.check = 0;
+                        } else {
+                            var config = {
+                                path : '',
+                                method : 'get',
+                                params : {},
+                                callback : '',
+                                check : 0
+                            };
 
-                        config.path = path;
-                        config.params[name] = value;
-                        config.callback = this.proxy(function(data) {
-                            if(data.result) this.config['_chk' + name].check = 1;
-                        });
+                            config.path = path;
+                            config.params[name] = value;
+                            config.callback = this.proxy(function(data) {
+                                if(data.result) this.config[cfgName].check = 1;
+                            });
+
+                            this.config[cfgName] = config;
+                        }
+
+                        this.component('remote', [cfgName]);
                     });
 
                     return func;
@@ -659,12 +669,9 @@
                     var chk = /^\w+$/;
                     return chk.test(value);
                 },
-                chkRemote: function () {
-                    if (parseInt(result) == 0) {
-                        return false;
-                    } else {
-                        return true;
-                    }
+                chkRemote: function (name) {
+                    if (this.config['_chk' + name].check) return true;
+                    else return false;
                 }
             }
         }
