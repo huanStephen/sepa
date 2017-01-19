@@ -62,3 +62,63 @@
     });
 
 })();
+
+(function() {
+    var sepa = org.eocencle.sepa;
+
+    var Ctrl = new sepa.Class([sepa.Controller, sepa.CRemote, sepa.CVaildate, sepa.CElement]);
+
+    Ctrl.include({
+        elements : {
+            '.required .email' : '$email',
+            '.required span' : '$errMsg',
+            '.ajax span' : '$ajaxErrMsg'
+        },
+
+        events : {
+            'click .required .requiredBtn' : 'requiredClick',
+            'mouseout .ajax .name' : 'ajaxMouseout',
+            'click .ajax .ajaxBtn' : 'ajaxClick'
+        },
+
+        config : {
+            test : {
+                path : '/sepa/test',
+                params : {
+                    name : 'miss'
+                },
+                callback : function(data) {
+                    console.log('ok');
+                }
+            }
+        },
+
+        load : function() {
+            this.component('remote', ['test']);
+            this.ajaxFunc = this.component('bind', ['name', '/user/name']);
+        },
+
+        requiredClick : function() {
+            var result = this.component('vaildate', ['email', '亲,请输入合法的邮箱!', this.$email.val()]);
+            if(result) {
+                this.$errMsg.text(result);
+            } else {
+                this.$errMsg.empty().append(this.component('element', ['strong']).text('验证成功!'));
+            }
+        },
+
+        ajaxMouseout : function(event) {
+            this.ajaxFunc.call(this, $(event.currentTarget).val());
+        },
+
+        ajaxClick : function() {
+            this.$ajaxErrMsg.text(this.component('vaildate', ['remote', null, 'name']));
+        },
+
+        testResult : function(data) {
+
+        }
+    });
+
+    new Ctrl('body');
+})();

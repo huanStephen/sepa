@@ -92,6 +92,8 @@
             klass.prototype._static = klass;
         }
 
+        klass.prototype.init = function() {};
+
         klass.fn = klass.prototype;
 
         klass.extend = function(obj) {
@@ -298,14 +300,14 @@
          * 保存到本地
          * @param name  保存名称
          */
-        saveLocal : function(name){
+        saveLocal : function(name) {
             localStorage[name] = this.toJSON();
         },
         /**
          * 读取本地信息
          * @param name	保存名称
          */
-        loadLocal : function(name){
+        loadLocal : function(name) {
             this.load(JSON.parse(localStorage[name] || '{}'));
         },
         /**
@@ -317,6 +319,362 @@
         }
     });
 
+    /**
+     * Control class
+     * 控制类
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _Controller = org.eocencle.sepa.Controller = new _Class();
 
+    _Controller.extend({
+        //扩展组件
+        _component : {}
+    });
+
+    _Controller.include({
+        //配置
+        config : {},
+
+        init : function(element) {
+            this._el = $(element);
+            this.refreshElements();
+            this.delegateEvents();
+            this.pickBlocks();
+            this.load && this.load();
+        },
+
+        $ : function(selector) {
+            return $(selector, this._el);
+        },
+        //根据第一个空格来分隔
+        eventSplitter : /^(\w+)\s*(.*)$/,
+
+        delegateEvents: function() {
+            for(var key in this.events) {
+                var methodName = this.events[key];
+                var method = this.proxy(this[methodName]);
+                var match = key.match(this.eventSplitter);
+                if(match == undefined) throw(this.events[key] + ' Bind error!');
+                var eventName = match[1];
+                var selector = match[2];
+                if(selector === '') {
+                    this._el.bind(eventName, method);
+                } else {
+                    if(selector.substring(0,1) === '#') {
+                        this.$(selector).bind(eventName, method);
+                    } else {
+                        this._el.delegate(selector, eventName, method);
+                    }
+                }
+            }
+        },
+
+        refreshElements : function() {
+            for(var key in this.elements)
+                this[this.elements[key]] = this.$(key);
+        },
+
+        pickBlocks : function() {
+            for(var key in this.blocks)
+                this[this.blocks[key]] = this.$(this[key]()).clone();
+        },
+
+        component : function(func, paramArray, packet) {
+            if(!packet || !$.trim(packet)) packet = '_common';
+
+            try {
+                return this._static._component[packet][func].apply(this, paramArray);
+            } catch (e) {
+                throw('Component call error! \n' + e);
+            }
+        }
+    });
+
+    /**
+     * 远程调用模块
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _CRemote = org.eocencle.sepa.CRemote = new _Class();
+
+    _CRemote.extend({
+        _component : {
+            _common : {
+                remote : function(cfgName) {
+                    var defcfg = {
+                        path : '',
+                        method : 'get',
+                        params : {},
+                        callback : ''
+                    };
+
+                    if(!$.trim(cfgName)) throw('No configuration!');
+
+                    var cfg = this.config[cfgName];
+                    if(!cfg) throw('No configuration!');
+
+                    if(!cfg.path || !$.trim(cfg.path)) throw('Required path!');
+                    if(!cfg.callback || !$.trim(cfg.callback)) throw('Required callback!');
+
+                    var config = Object.assign(defcfg, cfg);
+
+                    if(!config.method || !$.trim(config.method) ||
+                        $.trim(config.method).toLocaleLowerCase() === 'get') {
+                        if(config.params && $.trim(config.params)) {
+                            $.get(config.path, config.params,
+                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                        } else {
+                            $.get(config.path,
+                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                        }
+                    } else {
+                        if(config.params && $.trim(config.params)) {
+                            $.post(config.path, config.params,
+                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                        } else {
+                            $.post(config.path,
+                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    /**
+     * 元素模块
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _CElement = org.eocencle.sepa.CElement = new _Class();
+
+    _CElement.extend({
+        _component : {
+            _common : {
+                element : function(elName) {
+                    var defEl = {
+                        h1 : '<h1></h1>',
+                        h2 : '<h2></h2>',
+                        h3 : '<h3></h3>',
+                        h4 : '<h4></h4>',
+                        h5 : '<h5></h5>',
+                        h6 : '<h6></h6>',
+                        b : '<b></b>',
+                        strong : '<strong></strong>',
+                        i : '<i></i>',
+                        em : '<em></em>',
+                        dfn : '<dfn></dfn>',
+                        hr : '<hr/>',
+                        br : '<br/>',
+                        nobr : '<nobr></nobr>',
+                        p : '<p></p>',
+                        base : '<base/>',
+                        a : '<a></a>',
+                        img : '<im></im>',
+                        bgsound : '<bgsound></bgsound>',
+                        table : '<table></table>',
+                        tr : '<tr></tr>',
+                        td : '<td></td>',
+                        thead : '<thead></thead>',
+                        tbody : '<tbody></tbody>',
+                        tfoot : '<tfoot></tfoot>'
+                    };
+
+                    if(elName && $.trim(elName)) {
+                        if(defEl[elName])
+                            return $(defEl[elName]);
+                    } else {
+                        throw('Invalid elements!');
+                    }
+                }
+            }
+        }
+    });
+
+    /**
+     * 验证模块
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _CVaildate = org.eocencle.sepa.CVaildate = new _Class();
+
+    _CVaildate.extend({
+        _component : {
+            _common: {
+                vaildate : function() {
+                    var defMsg = {
+                        required : '此字段必填！',
+                        email : '请输入有效的邮箱地址！',
+                        url : '请输入有效的URL！',
+                        date : '请输入有效的日期！',
+                        dateISO : '请输入有效的日期(ISO)！',
+                        number : '请输入有效的数字！',
+                        digits : '请输入整数！',
+                        equalTo : '请输入相同的值！',
+                        maxlength : '输入超出设置长度！',
+                        minlength : '输入不够设置长度！',
+                        rangelength : '输入长度超出范围！',
+                        range : '输入值超出范围！',
+                        max : '输入值不能大于设置值！',
+                        min : '输入值不能小于设置值！',
+                        effective : '有效数据只能包含英文、数字、下划线！',
+                        remote : '异步验证失败！'
+                    };
+
+                    var rule = $.trim(arguments[0]);
+                    var errMsg = arguments[1];
+                    var params = Array.prototype.slice.call(arguments,2);
+                    if(rule && defMsg[rule]) {
+                        rule = rule.toLowerCase();
+                        if (rule === 'remote' ? this.component('chkRemote', params)
+                                : this.component(rule, params)) {
+                            return '';
+                        } else {
+                            if (!errMsg || !$.trim(errMsg)) {
+                                return defMsg[rule];
+                            } else {
+                                return errMsg;
+                            }
+                        }
+                    } else {
+                        throw('Invalid rules!');
+                    }
+                },
+
+                bind : function(name, path) {
+                    var func = this.proxy(function(value) {
+                        var cfgName = '_chk' + name;
+                        var cfg = this.config[cfgName];
+                        if(cfg) {
+                            cfg.check = 0;
+                        } else {
+                            var config = {
+                                path : '',
+                                method : 'get',
+                                params : {},
+                                callback : '',
+                                check : 0
+                            };
+
+                            config.path = path;
+                            config.params[name] = value;
+                            config.callback = this.proxy(function(data) {
+                                if(data.result) this.config[cfgName].check = 1;
+                            });
+
+                            this.config[cfgName] = config;
+                        }
+
+                        this.component('remote', [cfgName]);
+                    });
+
+                    return func;
+                },
+
+                required: function(value) {
+                    if (!value || !$.trim(value))
+                        return false;
+                    return true;
+                },
+                email: function(value) {
+                    var chk = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+                    return chk.test(value);
+                },
+                url: function(value) {
+                    var chk = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i;
+                    return chk.test(value);
+                },
+                date: function (value) {
+                    var chk = /Invalid|NaN/;
+                    return !chk.test(new Date(value).toString());
+                },
+                dateISO: function (value) {
+                    var chk = /^\d{4}[\/\-](0?[1-9]|1[012])[\/\-](0?[1-9]|[12][0-9]|3[01])$/;
+                    return chk.test(value);
+                },
+                number: function (value) {
+                    var chk = /^(?:-?\d+|-?\d{1,3}(?:,\d{3})+)?(?:\.\d+)?$/;
+                    return chk.test(value);
+                },
+                digits: function (value) {
+                    var chk = /^\d+$/;
+                    return chk.test(value);
+                },
+                equalTo: function (compare, value) {
+                    return $.trim(compare) === $.trim(value);
+                },
+                maxlength: function (maxlen, value) {
+                    var max;
+                    try {
+                        max = parseInt(maxlen);
+                    } catch (e) {
+                        throw('maxlength:类型转换错误！');
+                    }
+                    return value.length <= maxlen;
+                },
+                minlength: function (minlen, value) {
+                    var min;
+                    try {
+                        min = parseInt(minlen);
+                    } catch (e) {
+                        throw('minlength:类型转换错误！');
+                    }
+                    return minlen <= value.length;
+                },
+                rangelength: function (rangelen, value) {
+                    var min, max;
+                    var sp = rangelen.split('~');
+                    try {
+                        min = parseInt(sp[0]);
+                        max = parseInt(sp[1]);
+                    } catch (e) {
+                        throw('rangelength:类型转换错误！');
+                    }
+                    return min <= value.length && value.length <= max;
+                },
+                range: function (range, value) {
+                    var min, max, val;
+                    var sp = rangelen.split('~');
+                    try {
+                        min = parseInt(sp[0]);
+                        max = parseInt(sp[1]);
+                        val = parseInt(value);
+                    } catch (e) {
+                        throw('range:类型转换错误！');
+                    }
+                    return min <= val && val <= max;
+                },
+                max: function (max, value) {
+                    var m, v;
+                    try {
+                        m = parseInt(max);
+                        v = parseInt(value);
+                    } catch (e) {
+                        throw('max:类型转换错误！');
+                    }
+                    return v < m;
+                },
+                min: function (min, value) {
+                    var m, v;
+                    try {
+                        m = parseInt(min);
+                        v = parseInt(value);
+                    } catch (e) {
+                        throw('min:类型转换错误！');
+                    }
+                    return m < v;
+                },
+                effective: function (value) {
+                    var chk = /^\w+$/;
+                    return chk.test(value);
+                },
+                chkRemote: function (name) {
+                    if (this.config['_chk' + name].check) return true;
+                    else return false;
+                }
+            }
+        }
+    });
 
 })(jQuery);
