@@ -66,21 +66,41 @@
 (function() {
     var sepa = org.eocencle.sepa;
 
-    var Ctrl = new sepa.Class([sepa.Controller, sepa.CRemote]);
+    var Ctrl = new sepa.Class([sepa.Controller, sepa.CRemote, sepa.CVaildate, sepa.CElement]);
 
     Ctrl.include({
+        elements : {
+            '.required .email' : '$email',
+            '.required span' : '$errMsg'
+        },
+
+        events : {
+            'click .required .requiredBtn' : 'chkClick'
+        },
+
         config : {
             test : {
                 path : '/sepa/test',
                 params : {
                     name : 'miss'
                 },
-                callback : 'testResult'
+                callback : function(data) {
+                    console.log('ok');
+                }
             }
         },
 
         load : function() {
             this.component('remote', ['test']);
+        },
+
+        chkClick : function() {
+            var result = this.component('vaildate', ['email', '亲,请输入合法的邮箱!', this.$email.val()]);
+            if(result) {
+                this.$errMsg.text(result);
+            } else {
+                this.$errMsg.append(this.component('element', ['strong']).text('验证成功!'));
+            }
         },
 
         testResult : function(data) {

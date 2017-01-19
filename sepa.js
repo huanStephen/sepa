@@ -384,9 +384,9 @@
             if(!packet || !$.trim(packet)) packet = '_common';
 
             try {
-                return this._static.component[packet][func].apply(this, paramArray);
+                return this._static._component[packet][func].apply(this, paramArray);
             } catch (e) {
-                throw('Component call error!');
+                throw('Component call error! \n' + e);
             }
         }
     });
@@ -399,7 +399,7 @@
     var _CRemote = org.eocencle.sepa.CRemote = new _Class();
 
     _CRemote.extend({
-        component : {
+        _component : {
             _common : {
                 remote : function(cfgName) {
                     var defcfg = {
@@ -422,16 +422,248 @@
                     if(!config.method || !$.trim(config.method) ||
                         $.trim(config.method).toLocaleLowerCase() === 'get') {
                         if(config.params && $.trim(config.params)) {
-                            $.get(config.path, config.params, this[config.callback]);
+                            $.get(config.path, config.params,
+                                config.callback instanceof Function ? config.callback : this[config.callback]);
                         } else {
-                            $.get(config.path, this[config.callback]);
+                            $.get(config.path,
+                                config.callback instanceof Function ? config.callback : this[config.callback]);
                         }
                     } else {
                         if(config.params && $.trim(config.params)) {
-                            $.post(config.path, config.params, this[config.callback]);
+                            $.post(config.path, config.params,
+                                config.callback instanceof Function ? config.callback : this[config.callback]);
                         } else {
-                            $.post(config.path, this[config.callback]);
+                            $.post(config.path,
+                                config.callback instanceof Function ? config.callback : this[config.callback]);
                         }
+                    }
+                }
+            }
+        }
+    });
+
+    /**
+     * 元素模块
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _CElement = org.eocencle.sepa.CElement = new _Class();
+
+    _CElement.extend({
+        _component : {
+            _common : {
+                element : function(elName) {
+                    var defEl = {
+                        h1 : '<h1></h1>',
+                        h2 : '<h2></h2>',
+                        h3 : '<h3></h3>',
+                        h4 : '<h4></h4>',
+                        h5 : '<h5></h5>',
+                        h6 : '<h6></h6>',
+                        b : '<b></b>',
+                        strong : '<strong></strong>',
+                        i : '<i></i>',
+                        em : '<em></em>',
+                        dfn : '<dfn></dfn>',
+                        hr : '<hr/>',
+                        br : '<br/>',
+                        nobr : '<nobr></nobr>',
+                        p : '<p></p>',
+                        base : '<base/>',
+                        a : '<a></a>',
+                        img : '<im></im>',
+                        bgsound : '<bgsound></bgsound>',
+                        table : '<table></table>',
+                        tr : '<tr></tr>',
+                        td : '<td></td>',
+                        thead : '<thead></thead>',
+                        tbody : '<tbody></tbody>',
+                        tfoot : '<tfoot></tfoot>'
+                    };
+
+                    if(elName && $.trim(elName)) {
+                        if(defEl[elName])
+                            return $(defEl[elName]);
+                    } else {
+                        throw('Invalid elements!');
+                    }
+                }
+            }
+        }
+    });
+
+    /**
+     * 验证模块
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _CVaildate = org.eocencle.sepa.CVaildate = new _Class();
+
+    _CVaildate.extend({
+        _component : {
+            _common: {
+                vaildate : function() {
+                    var defMsg = {
+                        required : '此字段必填！',
+                        email : '请输入有效的邮箱地址！',
+                        url : '请输入有效的URL！',
+                        date : '请输入有效的日期！',
+                        dateISO : '请输入有效的日期(ISO)！',
+                        number : '请输入有效的数字！',
+                        digits : '请输入整数！',
+                        equalTo : '请输入相同的值！',
+                        maxlength : '输入超出设置长度！',
+                        minlength : '输入不够设置长度！',
+                        rangelength : '输入长度超出范围！',
+                        range : '输入值超出范围！',
+                        max : '输入值不能大于设置值！',
+                        min : '输入值不能小于设置值！',
+                        effective : '有效数据只能包含英文、数字、下划线！',
+                        remote : '异步验证失败！'
+                    };
+
+                    var rule = $.trim(arguments[0]);
+                    var errMsg = arguments[1];
+                    var params = Array.prototype.slice.call(arguments,2);
+                    if(rule && defMsg[rule]) {
+                        rule = rule.toLowerCase();
+                        if (rule === 'remote' ? this.component('chkRemote', params)
+                                : this.component(rule, params)) {
+                            return '';
+                        } else {
+                            if (!errMsg || !$.trim(errMsg)) {
+                                return defMsg[rule];
+                            } else {
+                                return errMsg;
+                            }
+                        }
+                    } else {
+                        throw('Invalid rules!');
+                    }
+                },
+
+                bind : function(name, path) {
+                    var func = this.proxy(function(value) {
+                        var config = {
+                            path : '',
+                            method : 'get',
+                            params : {},
+                            callback : '',
+                            check : 0
+                        };
+
+                        config.path = path;
+                        config.params[name] = value;
+                        config.callback = this.proxy(function(data) {
+                            if(data.result) this.config['_chk' + name].check = 1;
+                        });
+                    });
+
+                    return func;
+                },
+
+                required: function(value) {
+                    if (!value || !$.trim(value))
+                        return false;
+                    return true;
+                },
+                email: function(value) {
+                    var chk = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+                    return chk.test(value);
+                },
+                url: function(value) {
+                    var chk = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i;
+                    return chk.test(value);
+                },
+                date: function (value) {
+                    var chk = /Invalid|NaN/;
+                    return !chk.test(new Date(value).toString());
+                },
+                dateISO: function (value) {
+                    var chk = /^\d{4}[\/\-](0?[1-9]|1[012])[\/\-](0?[1-9]|[12][0-9]|3[01])$/;
+                    return chk.test(value);
+                },
+                number: function (value) {
+                    var chk = /^(?:-?\d+|-?\d{1,3}(?:,\d{3})+)?(?:\.\d+)?$/;
+                    return chk.test(value);
+                },
+                digits: function (value) {
+                    var chk = /^\d+$/;
+                    return chk.test(value);
+                },
+                equalTo: function (compare, value) {
+                    return $.trim(compare) === $.trim(value);
+                },
+                maxlength: function (maxlen, value) {
+                    var max;
+                    try {
+                        max = parseInt(maxlen);
+                    } catch (e) {
+                        throw('maxlength:类型转换错误！');
+                    }
+                    return value.length <= maxlen;
+                },
+                minlength: function (minlen, value) {
+                    var min;
+                    try {
+                        min = parseInt(minlen);
+                    } catch (e) {
+                        throw('minlength:类型转换错误！');
+                    }
+                    return minlen <= value.length;
+                },
+                rangelength: function (rangelen, value) {
+                    var min, max;
+                    var sp = rangelen.split('~');
+                    try {
+                        min = parseInt(sp[0]);
+                        max = parseInt(sp[1]);
+                    } catch (e) {
+                        throw('rangelength:类型转换错误！');
+                    }
+                    return min <= value.length && value.length <= max;
+                },
+                range: function (range, value) {
+                    var min, max, val;
+                    var sp = rangelen.split('~');
+                    try {
+                        min = parseInt(sp[0]);
+                        max = parseInt(sp[1]);
+                        val = parseInt(value);
+                    } catch (e) {
+                        throw('range:类型转换错误！');
+                    }
+                    return min <= val && val <= max;
+                },
+                max: function (max, value) {
+                    var m, v;
+                    try {
+                        m = parseInt(max);
+                        v = parseInt(value);
+                    } catch (e) {
+                        throw('max:类型转换错误！');
+                    }
+                    return v < m;
+                },
+                min: function (min, value) {
+                    var m, v;
+                    try {
+                        m = parseInt(min);
+                        v = parseInt(value);
+                    } catch (e) {
+                        throw('min:类型转换错误！');
+                    }
+                    return m < v;
+                },
+                effective: function (value) {
+                    var chk = /^\w+$/;
+                    return chk.test(value);
+                },
+                chkRemote: function () {
+                    if (parseInt(result) == 0) {
+                        return false;
+                    } else {
+                        return true;
                     }
                 }
             }
