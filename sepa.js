@@ -392,6 +392,7 @@
     });
 
     /**
+     * Remote call model
      * 远程调用模块
      * @type {org.eocencle.sepa.Class}
      * @private
@@ -443,6 +444,7 @@
     });
 
     /**
+     * Element model
      * 元素模块
      * @type {org.eocencle.sepa.Class}
      * @private
@@ -478,7 +480,18 @@
                         td : '<td></td>',
                         thead : '<thead></thead>',
                         tbody : '<tbody></tbody>',
-                        tfoot : '<tfoot></tfoot>'
+                        tfoot : '<tfoot></tfoot>',
+                        input : '<input/>',
+                        select : '<select></select>',
+                        optgroup : '<optgroup></optgroup>',
+                        option : '<option></option>',
+                        textarea : '<textarea></textarea>',
+                        span : '<span></span>',
+                        button : '<button></button>',
+                        div : '<div></div>',
+                        ul : '<ul></ul>',
+                        ol : '<ol></ol>',
+                        li : '<li></li>'
                     };
 
                     if(elName && $.trim(elName)) {
@@ -493,6 +506,7 @@
     });
 
     /**
+     * Vaildate model
      * 验证模块
      * @type {org.eocencle.sepa.Class}
      * @private
