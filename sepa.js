@@ -5,7 +5,7 @@
  * Author:  huanStephen
  * License: GPL-3.0
  * Date:    2017-1-12
- * Update:  2017-1-18
+ * Update:  2017-2-4
  */
 (function($) {
 
@@ -316,6 +316,27 @@
          */
         removeLocal : function(name) {
             localStorage.removeItem(name);
+        },
+        /**
+         * 保存到会话
+         * @param name  保存名称
+         */
+        saveSession : function(name) {
+            sessionStorage[name] = this.toJSON();
+        },
+        /**
+         * 读取会话信息
+         * @param name  保存名称
+         */
+        loadSession : function(name) {
+            this.load(JSON.parse(sessionStorage[name] || '{}'));
+        },
+        /**
+         * 删除会话信息
+         * @param name  保存名称
+         */
+        removeSession : function(name) {
+            sessionStorage.removeItem(name);
         }
     });
 
