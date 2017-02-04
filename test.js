@@ -61,6 +61,15 @@
         u.removeLocal('user');
     });
 
+    UserEntity.find(2).saveSession('user1');
+
+    u.loadSession('user1');
+    $('.loadSession').children('span').text(u.id + '--' + u.name + '--' + u.age + '--' + u.sex + '--' + u.hobby);
+
+    $('.removeSessionBtn').click(function() {
+        u.removeSession('user1');
+    });
+
 })();
 
 (function() {
