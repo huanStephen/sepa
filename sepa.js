@@ -578,28 +578,31 @@
                 },
 
                 bind : function(name, path) {
-                    var func = this.proxy(function(value) {
+                    var cfgName = '_chk' + name;
+
+                    var config = {
+                        path : '',
+                        method : 'get',
+                        params : {},
+                        callback : '',
+                        check : 0
+                    };
+
+                    config.path = path;
+                    config.callback = this.proxy(function(data) {
+                        if(data.result) this.config[cfgName].check = 1;
+                    });
+
+                    this.config[cfgName] = config;
+
+                    var func = this.proxy(function(name, $el) {
                         var cfgName = '_chk' + name;
                         var cfg = this.config[cfgName];
-                        if(cfg) {
-                            cfg.check = 0;
-                        } else {
-                            var config = {
-                                path : '',
-                                method : 'get',
-                                params : {},
-                                callback : '',
-                                check : 0
-                            };
 
-                            config.path = path;
-                            config.params[name] = value;
-                            config.callback = this.proxy(function(data) {
-                                if(data.result) this.config[cfgName].check = 1;
-                            });
+                        if(!cfg) throw('No configuration!');
 
-                            this.config[cfgName] = config;
-                        }
+                        cfg.check = 0;
+                        cfg.params[name] = $el.val();
 
                         this.component('remote', [cfgName]);
                     });

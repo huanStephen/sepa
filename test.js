@@ -117,7 +117,7 @@
         },
 
         ajaxMouseout : function(event) {
-            this.ajaxFunc.call(this, $(event.currentTarget).val());
+            this.ajaxFunc.call(this, 'name', $(event.currentTarget));
         },
 
         ajaxClick : function() {
