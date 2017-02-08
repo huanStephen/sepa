@@ -81,13 +81,17 @@
         elements : {
             '.required .email' : '$email',
             '.required span' : '$errMsg',
-            '.ajax span' : '$ajaxErrMsg'
+            '.ajax span' : '$ajaxErrMsg',
+            '.state .output' : '$output'
         },
 
         events : {
             'click .required .requiredBtn' : 'requiredClick',
             'mouseout .ajax .name' : 'ajaxMouseout',
-            'click .ajax .ajaxBtn' : 'ajaxClick'
+            'click .ajax .ajaxBtn' : 'ajaxClick',
+            'click .state .state1' : 'state1Click',
+            'click .state .state2' : 'state2Click',
+            'click .state .state3' : 'state3Click'
         },
 
         config : {
@@ -105,6 +109,22 @@
         load : function() {
             this.component('remote', ['test']);
             this.ajaxFunc = this.component('bind', ['name', '/user/name']);
+
+            var Statem = new sepa.Class(sepa.StateMachine);
+            this.sm = new Statem(this);
+            var Event = new sepa.Class(sepa.Event);
+            var e1 = new Event('state1', function() {
+                this.$output.text('state1');
+            });
+            var e2 = new Event('state2', function() {
+                this.$output.text('state2');
+            });
+            var e3 = new Event('state3', function() {
+                this.$output.text('state3');
+            });
+            this.sm.addEvent(e1);
+            this.sm.addEvent(e2);
+            this.sm.addEvent(e3);
         },
 
         requiredClick : function() {
@@ -126,6 +146,19 @@
 
         testResult : function(data) {
 
+        },
+
+        state1Click : function(event) {
+            this.sm.trigger('state1');
+        },
+
+        state2Click : function(event) {
+            this.sm.trigger('state2');
+            this.sm.removeEvent('state2');
+        },
+
+        state3Click : function(event) {
+            this.sm.trigger('state3');
         }
     });
 

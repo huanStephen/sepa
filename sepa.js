@@ -413,6 +413,53 @@
     });
 
     /**
+     * Finite state machine
+     * 有限状态机
+     * @type {Function}
+     * @private
+     */
+    var _StateMachine = org.eocencle.sepa.StateMachine = new _Class();
+
+    _StateMachine.include({
+        events : {},
+
+        init : function(content) {
+            this.content = content;
+        },
+
+        addEvent : function(event) {
+            if(event && event.state && $.trim(event.state)) this.events[event.state] = event;
+        },
+
+        removeEvent : function(state) {
+            delete this.events[state];
+        },
+
+        trigger : function(state) {
+            this.events[state] && this.events[state].event.apply(this.content, arguments);
+        }
+    });
+
+    /**
+     * State machine event
+     * 状态机事件
+     * @type {Function}
+     * @private
+     */
+    var _Event = org.eocencle.sepa.Event = new _Class();
+
+    _Event.include({
+        state : '',
+
+        init : function(state, event) {
+            this.state = state;
+            this.event = event;
+        },
+
+        event : function() {}
+    });
+
+    /**
      * Remote call model
      * 远程调用模块
      * @type {org.eocencle.sepa.Class}
