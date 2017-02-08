@@ -413,6 +413,53 @@
     });
 
     /**
+     * Finite state machine
+     * 有限状态机
+     * @type {Function}
+     * @private
+     */
+    var _StateMachine = org.eocencle.sepa.StateMachine = new _Class();
+
+    _StateMachine.include({
+        events : {},
+
+        init : function(content) {
+            this.content = content;
+        },
+
+        addEvent : function(event) {
+            if(event && event.state && $.trim(event.state)) this.events[event.state] = event;
+        },
+
+        removeEvent : function(state) {
+            delete this.events[state];
+        },
+
+        trigger : function(state) {
+            this.events[state] && this.events[state].event.apply(this.content, arguments);
+        }
+    });
+
+    /**
+     * State machine event
+     * 状态机事件
+     * @type {Function}
+     * @private
+     */
+    var _Event = org.eocencle.sepa.Event = new _Class();
+
+    _Event.include({
+        state : '',
+
+        init : function(state, event) {
+            this.state = state;
+            this.event = event;
+        },
+
+        event : function() {}
+    });
+
+    /**
      * Remote call model
      * 远程调用模块
      * @type {org.eocencle.sepa.Class}
@@ -578,28 +625,31 @@
                 },
 
                 bind : function(name, path) {
-                    var func = this.proxy(function(value) {
+                    var cfgName = '_chk' + name;
+
+                    var config = {
+                        path : '',
+                        method : 'get',
+                        params : {},
+                        callback : '',
+                        check : 0
+                    };
+
+                    config.path = path;
+                    config.callback = this.proxy(function(data) {
+                        if(data.result) this.config[cfgName].check = 1;
+                    });
+
+                    this.config[cfgName] = config;
+
+                    var func = this.proxy(function(name, $el) {
                         var cfgName = '_chk' + name;
                         var cfg = this.config[cfgName];
-                        if(cfg) {
-                            cfg.check = 0;
-                        } else {
-                            var config = {
-                                path : '',
-                                method : 'get',
-                                params : {},
-                                callback : '',
-                                check : 0
-                            };
 
-                            config.path = path;
-                            config.params[name] = value;
-                            config.callback = this.proxy(function(data) {
-                                if(data.result) this.config[cfgName].check = 1;
-                            });
+                        if(!cfg) throw('No configuration!');
 
-                            this.config[cfgName] = config;
-                        }
+                        cfg.check = 0;
+                        cfg.params[name] = $el.val();
 
                         this.component('remote', [cfgName]);
                     });
