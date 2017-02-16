@@ -492,18 +492,18 @@
                         $.trim(config.method).toLocaleLowerCase() === 'get') {
                         if(config.params && $.trim(config.params)) {
                             $.get(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
                         } else {
                             $.get(config.path,
-                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
                         }
                     } else {
                         if(config.params && $.trim(config.params)) {
                             $.post(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
                         } else {
                             $.post(config.path,
-                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
                         }
                     }
                 }
@@ -559,7 +559,8 @@
                         div : '<div></div>',
                         ul : '<ul></ul>',
                         ol : '<ol></ol>',
-                        li : '<li></li>'
+                        li : '<li></li>',
+                        label : '<label></label>'
                     };
 
                     if(elName && $.trim(elName)) {
