@@ -5,7 +5,7 @@
  * Author:  huanStephen
  * License: GPL-3.0
  * Date:    2017-1-12
- * Update:  2017-2-4
+ * Update:  2017-2-9
  */
 (function($) {
 
@@ -36,6 +36,18 @@
         }
 
         return result;
+    };
+
+    /**
+     * Guid generator
+     * guid生成
+     * @returns {string}
+     */
+    Math.guid = function() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        }).toUpperCase();
     };
 
     /**
@@ -492,18 +504,18 @@
                         $.trim(config.method).toLocaleLowerCase() === 'get') {
                         if(config.params && $.trim(config.params)) {
                             $.get(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
                         } else {
                             $.get(config.path,
-                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
                         }
                     } else {
                         if(config.params && $.trim(config.params)) {
                             $.post(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
                         } else {
                             $.post(config.path,
-                                config.callback instanceof Function ? config.callback : this[config.callback]);
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
                         }
                     }
                 }
@@ -559,7 +571,8 @@
                         div : '<div></div>',
                         ul : '<ul></ul>',
                         ol : '<ol></ol>',
-                        li : '<li></li>'
+                        li : '<li></li>',
+                        label : '<label></label>'
                     };
 
                     if(elName && $.trim(elName)) {
