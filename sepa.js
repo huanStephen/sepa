@@ -94,7 +94,7 @@
                 if(parent.prototype.init)
                     initqueue.push(parent.prototype.init);
 
-                subclass.prototype = parent.prototype;
+                subclass.prototype = Object.merge(subclass.prototype, parent.prototype);
 
                 subclass.prototype._initqueue = initqueue;
             }
