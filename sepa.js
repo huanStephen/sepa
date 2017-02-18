@@ -5,7 +5,7 @@
  * Author:  huanStephen
  * License: GPL-3.0
  * Date:    2017-1-12
- * Update:  2017-2-9
+ * Update:  2017-2-18
  */
 (function($) {
 
@@ -111,7 +111,11 @@
         klass.extend = function(obj) {
             var extended = obj.extended;
             for(var i in obj) {
-                klass[i] = obj[i];
+                if(obj[i] instanceof Object && !(obj[i] instanceof Array) && !(obj[i] instanceof Function)) {
+                    klass[i] = klass[i] ? Object.merge(klass[i], obj[i]) : obj[i];
+                } else {
+                    klass[i] = obj[i];
+                }
             }
             extended && extended(klass);
         };
@@ -119,7 +123,11 @@
         klass.include = function(obj) {
             var included = obj.included;
             for(var i in obj) {
-                klass.fn[i] = obj[i];
+                if(obj[i] instanceof Object && !(obj[i] instanceof Array) && !(obj[i] instanceof Function)) {
+                    klass.fn[i] = klass.fn[i] ? Object.merge(klass.fn[i], obj[i]) : obj[i];
+                } else {
+                    klass.fn[i] = obj[i];
+                }
             }
             included && included(klass);
         };
