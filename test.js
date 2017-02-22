@@ -70,6 +70,16 @@
         u.removeSession('user1');
     });
 
+    var Password = new sepa.Class(sepa.BaseModel);
+    Password.create(['id', 'password', 'salt']);
+
+    var Pwd = new sepa.Class([Password, sepa.Model]);
+
+    Pwd.populate([
+        {id : 1, password : '123456', salt : 'aa'},
+        {id : 2, password : '654321', salt : 'bb'}
+    ]);
+
 })();
 
 (function() {

@@ -199,15 +199,11 @@
         populate : function(array) {
             this.clear();
 
-            var Base = new _Class(_BaseModel);
-            Base.create(this._attributes);
-            var Recode = new _Class([Base, _Model]);
+            var recode;
             for(var i = 0, il = array.length; i < il; i++) {
-                var recode = new Recode(array[i]);
+                recode = new this(array[i]);
                 recode.save();
             }
-            this._records = Recode.all();
-            this._count = Recode.count();
         },
         /**
          * 获取数据个数
