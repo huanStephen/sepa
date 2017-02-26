@@ -376,6 +376,7 @@
         init : function(element) {
             this._el = $(element);
             this.refreshElements();
+            this.searchGlobals();
             this.delegateEvents();
             this.pickBlocks();
             this.load && this.load();
@@ -410,6 +411,11 @@
         refreshElements : function() {
             for(var key in this.elements)
                 this[this.elements[key]] = this.$(key);
+        },
+
+        searchGlobals : function() {
+            for(var key in this.globals)
+                this[this.globals[key]] = $(key);
         },
 
         pickBlocks : function() {
