@@ -5,7 +5,7 @@
  * Author:  huanStephen
  * License: GPL-3.0
  * Date:    2017-1-12
- * Update:  2017-2-9
+ * Update:  2017-2-18
  */
 (function($) {
 
@@ -94,7 +94,7 @@
                 if(parent.prototype.init)
                     initqueue.push(parent.prototype.init);
 
-                subclass.prototype = parent.prototype;
+                subclass.prototype = Object.merge(subclass.prototype, parent.prototype);
 
                 subclass.prototype._initqueue = initqueue;
             }
@@ -111,7 +111,11 @@
         klass.extend = function(obj) {
             var extended = obj.extended;
             for(var i in obj) {
-                klass[i] = obj[i];
+                if(obj[i] instanceof Object && !(obj[i] instanceof Array) && !(obj[i] instanceof Function)) {
+                    klass[i] = klass[i] ? Object.merge(klass[i], obj[i]) : obj[i];
+                } else {
+                    klass[i] = obj[i];
+                }
             }
             extended && extended(klass);
         };
@@ -119,7 +123,11 @@
         klass.include = function(obj) {
             var included = obj.included;
             for(var i in obj) {
-                klass.fn[i] = obj[i];
+                if(obj[i] instanceof Object && !(obj[i] instanceof Array) && !(obj[i] instanceof Function)) {
+                    klass.fn[i] = klass.fn[i] ? Object.merge(klass.fn[i], obj[i]) : obj[i];
+                } else {
+                    klass.fn[i] = obj[i];
+                }
             }
             included && included(klass);
         };
@@ -191,15 +199,11 @@
         populate : function(array) {
             this.clear();
 
-            var Base = new _Class(_BaseModel);
-            Base.create(this._attributes);
-            var Recode = new _Class([Base, _Model]);
+            var recode;
             for(var i = 0, il = array.length; i < il; i++) {
-                var recode = new Recode(array[i]);
+                recode = new this(array[i]);
                 recode.save();
             }
-            this._records = Recode.all();
-            this._count = Recode.count();
         },
         /**
          * 获取数据个数
@@ -372,6 +376,7 @@
         init : function(element) {
             this._el = $(element);
             this.refreshElements();
+            this.searchGlobals();
             this.delegateEvents();
             this.pickBlocks();
             this.load && this.load();
@@ -406,6 +411,11 @@
         refreshElements : function() {
             for(var key in this.elements)
                 this[this.elements[key]] = this.$(key);
+        },
+
+        searchGlobals : function() {
+            for(var key in this.globals)
+                this[this.globals[key]] = $(key);
         },
 
         pickBlocks : function() {
