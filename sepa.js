@@ -631,7 +631,6 @@
                     var errMsg = arguments[1];
                     var params = Array.prototype.slice.call(arguments,2);
                     if(rule && defMsg[rule]) {
-                        rule = rule.toLowerCase();
                         if (rule === 'remote' ? this.component('chkRemote', params)
                                 : this.component(rule, params)) {
                             return '';
