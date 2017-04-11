@@ -3,7 +3,7 @@
  *
  * Version: 2.0.0
  * Author:  huanStephen
- * License: GPL-3.0
+ * License: MIT
  * Date:    2017-1-12
  * Update:  2017-4-11
  */
