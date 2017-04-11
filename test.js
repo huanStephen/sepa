@@ -174,3 +174,17 @@
 
     new Ctrl('body');
 })();
+
+//数据模型有序性测试
+(function() {
+    var array = new Array();
+
+    array.push(1);
+    array.push(2);
+    array.push(3);
+
+    console.log(array.join(','));
+
+    array.splice(1, 1);
+    console.log(array.join(','));
+})();
