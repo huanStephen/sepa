@@ -3,9 +3,9 @@
  *
  * Version: 2.0.0
  * Author:  huanStephen
- * License: GPL-3.0
+ * License: MIT
  * Date:    2017-1-12
- * Update:  2017-2-18
+ * Update:  2017-4-11
  */
 (function($) {
 
@@ -159,6 +159,8 @@
         _records : {},
         //资源个数
         _count : 0,
+        //排序
+        _sort : [],
 
         /**
          * 创建数据模型
@@ -191,6 +193,7 @@
         clear : function() {
             this._records = {};
             this._count = 0;
+            this._sort.splice(0, this._sort.length);
         },
         /**
          * 批量添加数据
@@ -217,7 +220,9 @@
          * @returns {_records|{}}   全部数据
          */
         all : function() {
-            return this._records;
+            var result = new Array();
+            for(var i in this._sort) result.push(this._records[this._sort[i]]);
+            return result;
         }
     });
 
@@ -254,6 +259,7 @@
             this._newRecord = false;
             this._static._records[this.id] = this.dup();
             this._static._count ++;
+            this._static._sort.push(this.id);
         },
         /**
          * 更新记录
@@ -272,7 +278,14 @@
          */
         destroy : function() {
             delete this._static._records[this.id];
-            this._static.count --;
+            this._static._count --;
+            var sort = this._static._sort;
+            for(var i=0; i < sort.length; i++) {
+                if(sort[i] == this.id) {
+                    this._static._sort.splice(i, 1);
+                    break;
+                }
+            }
         },
         /**
          * 获取属性对象
@@ -399,11 +412,7 @@
                 if(selector === '') {
                     this._el.bind(eventName, method);
                 } else {
-                    if(selector.substring(0,1) === '#') {
-                        this.$(selector).bind(eventName, method);
-                    } else {
-                        this._el.delegate(selector, eventName, method);
-                    }
+                    this._el.on(eventName, selector, method);
                 }
             }
         },
@@ -631,7 +640,6 @@
                     var errMsg = arguments[1];
                     var params = Array.prototype.slice.call(arguments,2);
                     if(rule && defMsg[rule]) {
-                        rule = rule.toLowerCase();
                         if (rule === 'remote' ? this.component('chkRemote', params)
                                 : this.component(rule, params)) {
                             return '';

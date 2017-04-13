@@ -174,3 +174,31 @@
 
     new Ctrl('body');
 })();
+
+//数据模型有序性测试
+(function() {
+    var array = new Array();
+
+    array.push(1);
+    array.push(2);
+    array.push(3);
+
+    console.log(array.join(','));
+
+    array.splice(1, 2);
+    console.log(array.join(','));
+
+    var sepa = org.eocencle.sepa;
+
+    var User = new sepa.Class(sepa.BaseModel);
+    User.create(['id', 'name']);
+
+    var UserEntity = new sepa.Class([User, sepa.Model]);
+
+    UserEntity.populate([{id : 3, name : '张三'},{id : 2, name : '李四'},{id : 1, name : '王五'}]);
+
+    var users = UserEntity.all();
+    for(var i in users) {
+        console.log(users[i].id + '---' + users[i].name);
+    }
+})();
