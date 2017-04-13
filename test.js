@@ -185,6 +185,20 @@
 
     console.log(array.join(','));
 
-    array.splice(1, 1);
+    array.splice(1, 2);
     console.log(array.join(','));
+
+    var sepa = org.eocencle.sepa;
+
+    var User = new sepa.Class(sepa.BaseModel);
+    User.create(['id', 'name']);
+
+    var UserEntity = new sepa.Class([User, sepa.Model]);
+
+    UserEntity.populate([{id : 3, name : '张三'},{id : 2, name : '李四'},{id : 1, name : '王五'}]);
+
+    var users = UserEntity.all();
+    for(var i in users) {
+        console.log(users[i].id + '---' + users[i].name);
+    }
 })();

@@ -193,7 +193,7 @@
         clear : function() {
             this._records = {};
             this._count = 0;
-            this._sort.slice(0, this._sort.length);
+            this._sort.splice(0, this._sort.length);
         },
         /**
          * 批量添加数据
@@ -282,7 +282,7 @@
             var sort = this._static._sort;
             for(var i=0; i < sort.length; i++) {
                 if(sort[i] == this.id) {
-                    this._static._sort.slice(i, 1);
+                    this._static._sort.splice(i, 1);
                     break;
                 }
             }
