@@ -751,7 +751,7 @@
                 },
                 range: function (range, value) {
                     var min, max, val;
-                    var sp = rangelen.split('~');
+                    var sp = range.split('~');
                     try {
                         min = parseInt(sp[0]);
                         max = parseInt(sp[1]);
