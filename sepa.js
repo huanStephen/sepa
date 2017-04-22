@@ -523,18 +523,22 @@
                         $.trim(config.method).toLocaleLowerCase() === 'get') {
                         if(config.params && $.trim(config.params)) {
                             $.get(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
+                                'json');
                         } else {
                             $.get(config.path,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
+                                'json');
                         }
                     } else {
                         if(config.params && $.trim(config.params)) {
                             $.post(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
+                                'json');
                         } else {
                             $.post(config.path,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
+                                'json');
                         }
                     }
                 }
