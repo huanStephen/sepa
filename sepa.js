@@ -1,11 +1,11 @@
 /**
  * Sepa
  *
- * Version: 2.0.0
+ * Version: 2.1.0
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-1-12
- * Update:  2017-4-11
+ * Update:  2017-4-22
  */
 (function($) {
 
@@ -792,6 +792,48 @@
                 chkRemote: function (name) {
                     if (this.config['_chk' + name].check) return true;
                     else return false;
+                }
+            }
+        }
+    });
+
+    /**
+     * Storage model
+     * 本地存储模块
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _CStorage = org.eocencle.sepa.CStorage = new _Class();
+
+    _CStorage.extend({
+        _component: {
+            _common: {
+                saveLocal : function(name, data) {
+                    localStorage[name] = JSON.stringify(data);
+                },
+
+                loadLocal : function(name) {
+                    var d = localStorage[name];
+                    if(d == undefined) return d;
+                    return JSON.parse(d);
+                },
+
+                removeLocal : function(name) {
+                    localStorage.removeItem(name);
+                },
+
+                saveSession : function(name, data) {
+                    sessionStorage[name] = JSON.stringify(data);
+                },
+
+                loadSession : function(name) {
+                    var d = sessionStorage[name];
+                    if(d == undefined) return d;
+                    return JSON.parse(d);
+                },
+
+                removeSession : function(name) {
+                    sessionStorage.removeItem(name);
                 }
             }
         }
