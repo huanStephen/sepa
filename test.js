@@ -202,3 +202,105 @@
         console.log(users[i].id + '---' + users[i].name);
     }
 })();
+
+//分页测试
+(function() {
+    var sepa = org.eocencle.sepa;
+
+    var MyPage = new sepa.Class();
+
+    MyPage.include({
+        blocks : {
+            'prevBtnBlk' : 'prevBtnEl',
+            'nextBtnBlk' : 'nextBtnEl',
+            'actBtnBlk' : 'actBtnEl',
+            'pageBtnBlk' : 'pageBtnEl',
+            'moitBtnBlk' : 'moitBtnEl'
+
+        },
+        config : {
+            page : {
+                block : 5,
+                container : 'ul.p',
+                btnFontPos : 'a',
+                btns : {
+                    prevBtn : 'prevBtnEl',
+                    nextBtn : 'nextBtnEl',
+                    actBtn : 'actBtnEl',
+                    pageBtn : 'pageBtnEl',
+                    moitBtn : 'moitBtnEl'
+                },
+                methods : {
+                    prevMethod : 'pervClick',
+                    nextMethod : 'nextClick',
+                    pageMethod : 'pageClick'
+                }
+            }
+        },
+        prevBtnBlk : function() {
+            var li = this.component('element', ['li']).addClass('prev').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+            var a = this.component('element', ['a']).attr('href', 'javascript:void(0);').append('&lt;');
+            li.append(a);
+            return li;
+        },
+
+        nextBtnBlk : function() {
+            var li = this.component('element', ['li']).addClass('next').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+            var a = this.component('element', ['a']).attr('href', 'javascript:void(0);').append('&gt;');
+            li.append(a);
+            return li;
+        },
+
+        actBtnBlk : function() {
+            var li = this.component('element', ['li']).css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+            var a = this.component('element', ['a']).attr('href', 'javascript:void(0);').addClass('current').css('color','red');
+            li.append(a);
+            return li;
+        },
+
+        pageBtnBlk : function() {
+            var li = this.component('element', ['li']).addClass('num').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+            var a = this.component('element', ['a']).attr('href', 'javascript:void(0);');
+            li.append(a);
+            return li;
+        },
+
+        moitBtnBlk : function() {
+            return this.component('element', ['li']).text(' ... ').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+        }
+    });
+
+    var PageCtrl = new sepa.Class([sepa.Controller, sepa.CElement, sepa.CPage, MyPage]);
+
+    PageCtrl.include({
+
+        currPage : '',
+
+        totalPage : 49,
+
+        load : function() {
+            this.component('openPage', ['page']);
+            this.show(1);
+        },
+
+        show : function(currPage) {
+            this.currPage = currPage;
+            this.component('paginate', [currPage, this.totalPage]);
+        },
+
+        pervClick : function() {
+            this.show(this.currPage - 1);
+        },
+
+        nextClick : function() {
+            this.show(this.currPage + 1);
+        },
+
+        pageClick : function(event) {
+            this.show(parseInt($(event.target).text()));
+        }
+
+    });
+
+    new PageCtrl('div.page');
+})();
