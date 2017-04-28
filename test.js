@@ -304,3 +304,26 @@
 
     new PageCtrl('div.page');
 })();
+
+//DOM渲染
+(function() {
+    var sepa = org.eocencle.sepa;
+
+    var DomCtrl = new sepa.Class([sepa.Controller, sepa.CDomRenderRole]);
+
+    DomCtrl.include({
+
+        elements : {
+            'div.test1' : 'test1'
+        },
+
+        load : function() {
+            this.component('domRenderRole', [false, this.test1, '张三']);
+            this.component('domRenderRole', [false, this.test1, 'color:red;', 'style']);
+            console.log(this.component('domRenderRole', [true, this.test1, '', 'class']));
+        }
+
+    });
+
+    new DomCtrl('div.render');
+})();
