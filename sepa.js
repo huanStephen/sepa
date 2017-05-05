@@ -576,7 +576,7 @@
                         p : '<p></p>',
                         base : '<base/>',
                         a : '<a></a>',
-                        img : '<im></im>',
+                        img : '<img/>',
                         bgsound : '<bgsound></bgsound>',
                         table : '<table></table>',
                         tr : '<tr></tr>',
