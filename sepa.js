@@ -1,11 +1,11 @@
 /**
  * Sepa
  *
- * Version: 2.0.0
+ * Version: 2.1.0
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-1-12
- * Update:  2017-4-11
+ * Update:  2017-4-22
  */
 (function($) {
 
@@ -523,18 +523,22 @@
                         $.trim(config.method).toLocaleLowerCase() === 'get') {
                         if(config.params && $.trim(config.params)) {
                             $.get(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
+                                'json');
                         } else {
                             $.get(config.path,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
+                                'json');
                         }
                     } else {
                         if(config.params && $.trim(config.params)) {
                             $.post(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
+                                'json');
                         } else {
                             $.post(config.path,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]));
+                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
+                                'json');
                         }
                     }
                 }
@@ -572,7 +576,7 @@
                         p : '<p></p>',
                         base : '<base/>',
                         a : '<a></a>',
-                        img : '<im></im>',
+                        img : '<img/>',
                         bgsound : '<bgsound></bgsound>',
                         table : '<table></table>',
                         tr : '<tr></tr>',
@@ -751,7 +755,7 @@
                 },
                 range: function (range, value) {
                     var min, max, val;
-                    var sp = rangelen.split('~');
+                    var sp = range.split('~');
                     try {
                         min = parseInt(sp[0]);
                         max = parseInt(sp[1]);
@@ -788,6 +792,48 @@
                 chkRemote: function (name) {
                     if (this.config['_chk' + name].check) return true;
                     else return false;
+                }
+            }
+        }
+    });
+
+    /**
+     * Storage model
+     * 本地存储模块
+     * @type {org.eocencle.sepa.Class}
+     * @private
+     */
+    var _CStorage = org.eocencle.sepa.CStorage = new _Class();
+
+    _CStorage.extend({
+        _component: {
+            _common: {
+                saveLocal : function(name, data) {
+                    localStorage[name] = JSON.stringify(data);
+                },
+
+                loadLocal : function(name) {
+                    var d = localStorage[name];
+                    if(d == undefined) return d;
+                    return JSON.parse(d);
+                },
+
+                removeLocal : function(name) {
+                    localStorage.removeItem(name);
+                },
+
+                saveSession : function(name, data) {
+                    sessionStorage[name] = JSON.stringify(data);
+                },
+
+                loadSession : function(name) {
+                    var d = sessionStorage[name];
+                    if(d == undefined) return d;
+                    return JSON.parse(d);
+                },
+
+                removeSession : function(name) {
+                    sessionStorage.removeItem(name);
                 }
             }
         }
