@@ -79,7 +79,7 @@
                         var val = this.component('domRenderRole', [true, this[name]]);
 
                         if(vailds[name]) {
-                            var vs = vailds[name];
+                            var vs = $.extend(true, {}, vailds[name]);
 
                             for(var idx in vs) {
                                 if(msg) break;
