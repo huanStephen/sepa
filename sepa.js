@@ -402,20 +402,24 @@
             return $(selector, this._el);
         },
         //根据第一个空格来分隔
-        eventSplitter : /^(\w+)\s*(.*)$/,
+        _eventSplitter : '->',
 
         delegateEvents: function() {
             for(var key in this.events) {
                 var methodName = this.events[key];
-                var method = this.proxy(this[methodName]);
-                var match = key.match(this.eventSplitter);
-                if(match == undefined) throw(this.events[key] + ' Bind error!');
-                var eventName = match[1];
-                var selector = match[2];
+                var match = key.split(this._eventSplitter);
+                if (match == undefined || match.length != 2)
+                    throw(this.events[key] + ' Bind error!');
+                var eventName = match[0];
+                var selector = match[1];
                 if(selector === '') {
-                    this._el.bind(eventName, method);
+                    this._el.bind(eventName, {method : methodName}, this.proxy(function(event) {
+                        this[event.data.method].call(this, event, this.$(event.target), event.target.tagName);
+                    }));
                 } else {
-                    this._el.on(eventName, selector, method);
+                    this._el.on(eventName, selector, {method : methodName}, this.proxy(function(event) {
+                        this[event.data.method].call(this, event, this.$(event.target), event.target.tagName);
+                    }));
                 }
             }
         },

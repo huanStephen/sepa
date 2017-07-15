@@ -96,12 +96,12 @@
         },
 
         events : {
-            'click .required .requiredBtn' : 'requiredClick',
-            'mouseout .ajax .name' : 'ajaxMouseout',
-            'click .ajax .ajaxBtn' : 'ajaxClick',
-            'click .state .state1' : 'state1Click',
-            'click .state .state2' : 'state2Click',
-            'click .state .state3' : 'state3Click'
+            'click -> .required .requiredBtn' : 'requiredClick',
+            'mouseout -> .ajax .name' : 'ajaxMouseout',
+            'click -> .ajax .ajaxBtn' : 'ajaxClick',
+            'click -> .state .state1' : 'state1Click',
+            'click -> .state .state2' : 'state2Click',
+            'click -> .state .state3' : 'state3Click'
         },
 
         config : {
@@ -137,7 +137,10 @@
             this.sm.addEvent(e3);
         },
 
-        requiredClick : function() {
+        requiredClick : function(event, $el, tagName) {
+            console.log(event);
+            console.log($el);
+            console.log(tagName);
             var result = this.component('vaildate', ['email', '亲,请输入合法的邮箱!', this.$email.val()]);
             if(result) {
                 this.$errMsg.text(result);
