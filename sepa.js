@@ -522,7 +522,9 @@
                     if(!cfg) throw('No configuration!');
 
                     if(!cfg.path || !$.trim(cfg.path)) throw('Required path!');
-                    if(!cfg.callback || !$.trim(cfg.callback)) throw('Required callback!');
+                    if(!cfg.callback || !$.trim(cfg.callback)) {
+                        cfg.callback = cfgName + 'Result';
+                    };
 
                     var config = Object.assign(defcfg, cfg);
 

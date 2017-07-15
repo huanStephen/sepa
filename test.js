@@ -109,10 +109,10 @@
                 path : '/sepa/test',
                 params : {
                     name : 'miss'
-                },
+                }/*,
                 callback : function(data) {
                     console.log('ok');
-                }
+                }*/
             }
         },
 
