@@ -1,11 +1,11 @@
 /**
  * Sepa
  *
- * Version: 2.1.0
+ * Version: 2.1.1
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-1-12
- * Update:  2017-4-22
+ * Update:  2017-7-15
  */
 (function($) {
 
@@ -60,8 +60,11 @@
     var _Class = org.eocencle.sepa.Class = function(parent) {
 
         var klass = function () {
-            for(var i in this._initqueue)
-                this._initqueue[i].apply(this, arguments);
+            var self = this;
+            var args = arguments;
+            this._initqueue.forEach(function(val, idx, arr) {
+                val.apply(self, args);
+            });
 
             this.init && this.init.apply(this, arguments);
         };
@@ -73,16 +76,16 @@
             if (parent instanceof Array) {
                 var fn = {};
 
-                for (var i in parent) {
-                    klass = Object.merge(klass, parent[i]);
+                parent.forEach(function(val, idx, arr) {
+                    klass = Object.merge(klass, val);
 
-                    if(parent[i].fn._initqueue)
-                        initqueue = initqueue.concat(parent[i].fn._initqueue);
-                    if(parent[i].fn.init)
-                        initqueue.push(parent[i].fn.init);
+                    if(val.fn._initqueue)
+                        initqueue = initqueue.concat(val.fn._initqueue);
+                    if(val.fn.init)
+                        initqueue.push(val.fn.init);
 
-                    fn = Object.merge(fn, parent[i].fn);
-                }
+                    fn = Object.merge(fn, val.fn);
+                });
                 fn._initqueue = initqueue;
 
                 subclass.prototype = fn;
@@ -168,12 +171,11 @@
          */
         create : function(attrArray) {
             var chkId = false;
-            for(var i in attrArray) {
-                if(attrArray[i] === 'id') {
+            attrArray.forEach(function(val, idx, arr) {
+                if(val === 'id') {
                     chkId = true;
-                    break;
                 }
-            }
+            });
 
             if(chkId) this._attributes = attrArray;
             else throw('Required id!');
@@ -221,7 +223,9 @@
          */
         all : function() {
             var result = new Array();
-            for(var i in this._sort) result.push(this._records[this._sort[i]]);
+            this._sort.forEach(this.proxy(function(val, idx, arr) {
+                result.push(this._records[val]);
+            }));
             return result;
         }
     });
@@ -293,10 +297,9 @@
          */
         attributes : function() {
             var result = {};
-            for(var i in this._static._attributes) {
-                var attr = this._static._attributes[i];
-                result[attr] = this[attr];
-            }
+            this._static._attributes.forEach(this.proxy(function(val, idx, arr) {
+                result[val] = this[val];
+            }));
             result.id = this.id;
             return result;
         },
@@ -306,9 +309,9 @@
          */
         toJSON : function() {
             var obj = {};
-            var attr = this._static._attributes;
-            for(var i in attr)
-                obj[attr[i]] = this[attr[i]];
+            this._static._attributes.forEach(this.proxy(function(val, idx, arr) {
+                obj[val] = this[val];
+            }));
             return JSON.stringify(obj);
         },
         /**
