@@ -1,42 +1,15 @@
 /**
  * Sepa
  *
- * Version: 2.1.0
+ * Version: 3.0.0
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-1-12
- * Update:  2017-4-22
+ * Update:  2017-9-17
  */
 (function($) {
 
     this.org = {eocencle : {sepa : {}}};
-
-    /**
-     * The depth of the merger object
-     * 深度合并对象
-     * @param obj1  对象1
-     * @param obj2  对象2
-     */
-    Object.merge = function(obj1, obj2) {
-
-        if(!(obj1 instanceof Object)) throw('Obj1 is not an object!');
-        if(!(obj2 instanceof Object)) throw('Obj2 is not an object!');
-
-        var result = Object.assign(obj1 instanceof Function ? new _Class() : {}, obj1);
-        for(var i in obj2) {
-            if(obj2[i] instanceof Object) {
-                if(!obj1[i] || !(obj1 instanceof Object)) {
-                    result[i] = obj2[i];
-                } else {
-                    result[i] = Object.merge(obj1[i], obj2[i]);
-                }
-            } else {
-                result[i] = obj2[i];
-            }
-        }
-
-        return result;
-    };
 
     /**
      * Guid generator
@@ -59,87 +32,117 @@
      */
     var _Class = org.eocencle.sepa.Class = function(parent) {
 
-        var klass = function () {
-            for(var i in this._initqueue)
-                this._initqueue[i].apply(this, arguments);
+        var klass = function(){
+            var inits = new Array;
+            var curr = this;
+            do {
+                inits.push(curr.init);
+            } while(curr = curr._super);
 
-            this.init && this.init.apply(this, arguments);
+            inits.reverse();
+            inits.forEach(this.proxy(function(val, idx, arr) {
+                val.apply(this, []);
+            }));
         };
-
-        if(parent) {
-            var subclass = function(){};
-            var initqueue = new Array();
-
-            if (parent instanceof Array) {
-                var fn = {};
-
-                for (var i in parent) {
-                    klass = Object.merge(klass, parent[i]);
-
-                    if(parent[i].fn._initqueue)
-                        initqueue = initqueue.concat(parent[i].fn._initqueue);
-                    if(parent[i].fn.init)
-                        initqueue.push(parent[i].fn.init);
-
-                    fn = Object.merge(fn, parent[i].fn);
-                }
-                fn._initqueue = initqueue;
-
-                subclass.prototype = fn;
-            } else {
-                klass = Object.merge(klass, parent);
-
-                if(parent.prototype._initqueue)
-                    initqueue.concat(parent.prototype._initqueue);
-                if(parent.prototype.init)
-                    initqueue.push(parent.prototype.init);
-
-                subclass.prototype = Object.merge(subclass.prototype, parent.prototype);
-
-                subclass.prototype._initqueue = initqueue;
-            }
-
-            klass.prototype = new subclass;
-
-            klass.prototype._static = klass;
-        }
 
         klass.prototype.init = function() {};
 
+        klass.prototype.super = function(func, args) {
+            if (this._super) {
+                if (this._super[func]) {
+                    return this._super[func].apply(this, args);
+                } else {
+                    return this._super.super(func, args);
+                }
+            } else {
+                throw ReferenceError('Function of ' + func + ' is not found!');
+            }
+        };
+
+        klass._copy = function(obj) {
+            if ('function' == typeof obj) return obj;
+            if ('object' != typeof obj) return obj;
+            if ($.isArray(obj)) return $.extend(true, [], obj);
+            return $.extend(true, {}, obj);
+        };
+
+        if (parent){
+            if (parent instanceof Array) {
+                var first = true;
+                var perv = null;
+                var sup = null;
+                parent.forEach(function(val, idx, arr) {
+                    for (var i in val){
+                        klass[i] = klass._copy(val[i]);
+                    }
+                    for (var i in val.prototype){
+                        klass.prototype[i] = klass._copy(val.prototype[i]);
+                    }
+
+                    if (!first) {
+                        sup = val;
+                        while (sup._super) {
+                            sup = sup._super;
+                        }
+                        sup._super = perv;
+                        sup.prototype._super = perv.prototype;
+                    }
+                    perv = val;
+                    first = false;
+                });
+                klass._super = perv;
+                klass.prototype._super = perv.prototype;
+            } else {
+                for (var i in parent){
+                    klass[i] = klass._copy(parent[i]);
+                }
+                for (var i in parent.prototype){
+                    klass.prototype[i] = klass._copy(parent.prototype[i]);
+                }
+                klass._super = parent;
+                klass.prototype._super = parent.prototype;
+            }
+        }
+
         klass.fn = klass.prototype;
 
-        klass.extend = function(obj) {
+        klass.extend = function(obj){
             var extended = obj.extended;
-            for(var i in obj) {
-                if(obj[i] instanceof Object && !(obj[i] instanceof Array) && !(obj[i] instanceof Function)) {
-                    klass[i] = klass[i] ? Object.merge(klass[i], obj[i]) : obj[i];
-                } else {
-                    klass[i] = obj[i];
-                }
+            for(var i in obj){
+                klass[i] = obj[i];
             }
-            extended && extended(klass);
+            if (extended) extended(klass)
         };
 
-        klass.include = function(obj) {
+        klass.include = function(obj){
             var included = obj.included;
-            for(var i in obj) {
-                if(obj[i] instanceof Object && !(obj[i] instanceof Array) && !(obj[i] instanceof Function)) {
-                    klass.fn[i] = klass.fn[i] ? Object.merge(klass.fn[i], obj[i]) : obj[i];
-                } else {
-                    klass.fn[i] = obj[i];
-                }
+            for(var i in obj){
+                klass.fn[i] = obj[i];
             }
-            included && included(klass);
+            if (included) included(klass)
         };
 
-        klass.proxy = function(func) {
+        klass.proxy = function(func){
             var self = this;
             return (function() {
-                return func.apply(self,arguments);
+                return func.apply(self, arguments);
             });
-        };
+        }
+        klass.fn.proxy = klass.proxy;
 
-        klass.prototype.proxy = klass.proxy;
+        klass.fn._class = klass;
+
+        Object.defineProperty(klass, '_copy', {enumerable : false});
+        Object.defineProperty(klass, '_super', {enumerable : false});
+        Object.defineProperty(klass, 'extend', {enumerable : false});
+        Object.defineProperty(klass, 'include', {enumerable : false});
+        Object.defineProperty(klass, 'proxy', {enumerable : false});
+        Object.defineProperty(klass, 'fn', {enumerable : false});
+        Object.defineProperty(klass.prototype, '_class', {enumerable : false});
+        Object.defineProperty(klass.prototype, '_super', {enumerable : false});
+        Object.defineProperty(klass.prototype, 'init', {enumerable : false});
+        Object.defineProperty(klass.prototype, 'super', {enumerable : false});
+        Object.defineProperty(klass.prototype, 'proxy', {enumerable : false});
 
         return klass;
     };
@@ -792,48 +795,6 @@
                 chkRemote: function (name) {
                     if (this.config['_chk' + name].check) return true;
                     else return false;
-                }
-            }
-        }
-    });
-
-    /**
-     * Storage model
-     * 本地存储模块
-     * @type {org.eocencle.sepa.Class}
-     * @private
-     */
-    var _CStorage = org.eocencle.sepa.CStorage = new _Class();
-
-    _CStorage.extend({
-        _component: {
-            _common: {
-                saveLocal : function(name, data) {
-                    localStorage[name] = JSON.stringify(data);
-                },
-
-                loadLocal : function(name) {
-                    var d = localStorage[name];
-                    if(d == undefined) return d;
-                    return JSON.parse(d);
-                },
-
-                removeLocal : function(name) {
-                    localStorage.removeItem(name);
-                },
-
-                saveSession : function(name, data) {
-                    sessionStorage[name] = JSON.stringify(data);
-                },
-
-                loadSession : function(name) {
-                    var d = sessionStorage[name];
-                    if(d == undefined) return d;
-                    return JSON.parse(d);
-                },
-
-                removeSession : function(name) {
-                    sessionStorage.removeItem(name);
                 }
             }
         }
