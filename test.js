@@ -1,4 +1,84 @@
 (function() {
+
+    var sepa = org.eocencle.sepa;
+
+    var Animal = new sepa.Class;
+
+    Animal.include({
+        init : function() {
+            console.log('Animal init');
+        },
+        eat : function() {
+            console.log('Animal eat');
+        },
+
+        run : function() {
+            console.log('Animal run');
+        }
+    });
+
+    var Reptile = new sepa.Class(Animal);
+
+    Reptile.include({
+        init : function() {
+            console.log('Reptile init');
+        },
+        eat : function() {
+            console.log('Reptile eat');
+        },
+
+        run : function() {
+            console.log('Reptile run');
+        }
+    });
+
+    var Tortoies = new sepa.Class(Reptile);
+
+    Tortoies.include({
+        init : function() {
+            console.log('Tortoies init');
+            this.run();
+        },
+        run : function() {
+            console.log('Tortoies run');
+            this.super('run');
+        }
+    });
+
+    var tortoies = new Tortoies;
+    tortoies.eat();
+
+    var Fish = new sepa.Class(Animal);
+
+    Fish.include({
+        init : function() {
+            console.log('Fish init');
+        },
+        run : function() {
+            console.log('Fish swim');
+        }
+    });
+
+    var Fly = new sepa.Class;
+
+    Fly.include({
+        init : function() {
+            console.log('Fly init');
+        },
+        fly : function() {
+            console.log('fly');
+        }
+    });
+
+    var FlyFish = new sepa.Class([Fly, Fish]);
+
+    var flyFish = new FlyFish;
+    flyFish.fly();
+
+})();
+
+/*
+(function() {
     var sepa = org.eocencle.sepa;
 
     var UserInfo = new sepa.Class(sepa.BaseModel);
@@ -326,4 +406,4 @@
     });
 
     new DomCtrl('div.render');
-})();
+})();*/

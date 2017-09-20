@@ -66,42 +66,46 @@
             return $.extend(true, {}, obj);
         };
 
-        if (parent){
+        if (parent) {
             if (parent instanceof Array) {
-                var first = true;
-                var perv = null;
+                var classes = new Array;
                 var sup = null;
                 parent.forEach(function(val, idx, arr) {
-                    for (var i in val){
-                        klass[i] = klass._copy(val[i]);
-                    }
-                    for (var i in val.prototype){
-                        klass.prototype[i] = klass._copy(val.prototype[i]);
-                    }
-
-                    if (!first) {
-                        sup = val;
-                        while (sup._super) {
-                            sup = sup._super;
-                        }
-                        sup._super = perv;
-                        sup.prototype._super = perv.prototype;
-                    }
-                    perv = val;
-                    first = false;
+                    var cls = new Array;
+                    sup = val;
+                    do {
+                        cls.push(sup.fn._class);
+                    } while (sup = sup._super);
+                    cls.reverse();
+                    classes = classes.concat(cls);
                 });
-                klass._super = perv;
-                klass.prototype._super = perv.prototype;
-            } else {
-                for (var i in parent){
-                    klass[i] = klass._copy(parent[i]);
-                }
-                for (var i in parent.prototype){
-                    klass.prototype[i] = klass._copy(parent.prototype[i]);
-                }
-                klass._super = parent;
-                klass.prototype._super = parent.prototype;
+
+                var first = true;
+                classes.forEach(function(val, idx, arr) {
+                    if (first) {
+                        sup = new _Class(val);
+                        first = false;
+                    } else {
+                        sup.extend(val);
+                        sup.include({
+                            init : val.prototype.init
+                        });
+                        sup.include(val.prototype);
+                        sup = new _Class(sup);
+                    }
+                });
+
+                parent = sup;
             }
+
+            for (var i in parent) {
+                klass[i] = klass._copy(parent[i]);
+            }
+            for (var i in parent.prototype) {
+                klass.prototype[i] = klass._copy(parent.prototype[i]);
+            }
+            klass._super = parent;
+            klass.prototype._super = parent.prototype;
         }
 
         klass.fn = klass.prototype;
@@ -153,7 +157,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _BaseModel = org.eocencle.sepa.BaseModel = new _Class();
+    /*var _BaseModel = org.eocencle.sepa.BaseModel = new _Class();
 
     _BaseModel.extend({
         //属性字段
@@ -165,10 +169,10 @@
         //排序
         _sort : [],
 
-        /**
+        /!**
          * 创建数据模型
          * @param attrArray 属性数组
-         */
+         *!/
         create : function(attrArray) {
             var chkId = false;
             for(var i in attrArray) {
@@ -181,27 +185,27 @@
             if(chkId) this._attributes = attrArray;
             else throw('Required id!');
         },
-        /**
+        /!**
          * 查找记录
          * @param id    记录ID
-         */
+         *!/
         find : function(id) {
             var result = this._records[id];
             if(!result) throw('Unkown record!');
             return result;
         },
-        /**
+        /!**
          * 清空全部记录
-         */
+         *!/
         clear : function() {
             this._records = {};
             this._count = 0;
             this._sort.splice(0, this._sort.length);
         },
-        /**
+        /!**
          * 批量添加数据
          * @param array 数组格式数据
-         */
+         *!/
         populate : function(array) {
             this.clear();
 
@@ -211,17 +215,17 @@
                 recode.save();
             }
         },
-        /**
+        /!**
          * 获取数据个数
          * @returns {number}    数据个数
-         */
+         *!/
         count : function() {
             return this._count;
         },
-        /**
+        /!**
          * 获取全部数据
          * @returns {_records|{}}   全部数据
-         */
+         *!/
         all : function() {
             var result = new Array();
             for(var i in this._sort) result.push(this._records[this._sort[i]]);
@@ -229,56 +233,56 @@
         }
     });
 
-    /**
+    /!**
      * Data entity model
      * 实例模型
      * @type {org.eocencle.sepa.Class}
      * @private
-     */
+     *!/
     var _Model = org.eocencle.sepa.Model = new _Class();
 
     _Model.include({
         //是否新数据
         _newRecord : true,
-        /**
+        /!**
          * 初始化数据模型
          * @param attributes    数据
-         */
+         *!/
         init : function(attributes) {
             attributes && this.load(attributes);
         },
-        /**
+        /!**
          * 加载数据
          * @param attributes    数据
-         */
+         *!/
         load : function(attributes) {
             for (var name in attributes)
                 this[name] = attributes[name];
         },
-        /**
+        /!**
          * 创建记录
-         */
+         *!/
         create : function() {
             this._newRecord = false;
             this._static._records[this.id] = this.dup();
             this._static._count ++;
             this._static._sort.push(this.id);
         },
-        /**
+        /!**
          * 更新记录
-         */
+         *!/
         update : function() {
             this._static._records[this.id] = this.dup();
         },
-        /**
+        /!**
          * 保存记录
-         */
+         *!/
         save : function() {
             this._newRecord ? this.create() : this.update();
         },
-        /**
+        /!**
          * 销毁记录
-         */
+         *!/
         destroy : function() {
             delete this._static._records[this.id];
             this._static._count --;
@@ -290,10 +294,10 @@
                 }
             }
         },
-        /**
+        /!**
          * 获取属性对象
          * @returns 属性对象
-         */
+         *!/
         attributes : function() {
             var result = {};
             for(var i in this._static._attributes) {
@@ -303,10 +307,10 @@
             result.id = this.id;
             return result;
         },
-        /**
+        /!**
          * 转化为json
          * @returns {*|属性对象}
-         */
+         *!/
         toJSON : function() {
             var obj = {};
             var attr = this._static._attributes;
@@ -314,70 +318,70 @@
                 obj[attr[i]] = this[attr[i]];
             return JSON.stringify(obj);
         },
-        /**
+        /!**
          * 将新纪录提交给服务器
          * @param url	请求地址
          * @param callback	回调函数
-         */
+         *!/
         createRemote : function(url, callback) {
             $.post(url, this.attributes(), callback);
         },
-        /**
+        /!**
          * 创建副本
-         */
+         *!/
         dup : function() {
             return $.extend(true, {}, this);
         },
-        /**
+        /!**
          * 保存到本地
          * @param name  保存名称
-         */
+         *!/
         saveLocal : function(name) {
             localStorage[name] = this.toJSON();
         },
-        /**
+        /!**
          * 读取本地信息
          * @param name	保存名称
-         */
+         *!/
         loadLocal : function(name) {
             this.load(JSON.parse(localStorage[name] || '{}'));
         },
-        /**
+        /!**
          * 删除本地信息
          * @param name  保存名称
-         */
+         *!/
         removeLocal : function(name) {
             localStorage.removeItem(name);
         },
-        /**
+        /!**
          * 保存到会话
          * @param name  保存名称
-         */
+         *!/
         saveSession : function(name) {
             sessionStorage[name] = this.toJSON();
         },
-        /**
+        /!**
          * 读取会话信息
          * @param name  保存名称
-         */
+         *!/
         loadSession : function(name) {
             this.load(JSON.parse(sessionStorage[name] || '{}'));
         },
-        /**
+        /!**
          * 删除会话信息
          * @param name  保存名称
-         */
+         *!/
         removeSession : function(name) {
             sessionStorage.removeItem(name);
         }
     });
 
-    /**
+    /!**
      * Control class
      * 控制类
      * @type {org.eocencle.sepa.Class}
      * @private
-     */
+     *!/
     var _Controller = org.eocencle.sepa.Controller = new _Class();
 
     _Controller.extend({
@@ -446,12 +450,12 @@
         }
     });
 
-    /**
+    /!**
      * Finite state machine
      * 有限状态机
      * @type {Function}
      * @private
-     */
+     *!/
     var _StateMachine = org.eocencle.sepa.StateMachine = new _Class();
 
     _StateMachine.include({
@@ -474,12 +478,12 @@
         }
     });
 
-    /**
+    /!**
      * State machine event
      * 状态机事件
      * @type {Function}
      * @private
-     */
+     *!/
     var _Event = org.eocencle.sepa.Event = new _Class();
 
     _Event.include({
@@ -493,12 +497,12 @@
         event : function() {}
     });
 
-    /**
+    /!**
      * Remote call model
      * 远程调用模块
      * @type {org.eocencle.sepa.Class}
      * @private
-     */
+     *!/
     var _CRemote = org.eocencle.sepa.CRemote = new _Class();
 
     _CRemote.extend({
@@ -549,12 +553,12 @@
         }
     });
 
-    /**
+    /!**
      * Element model
      * 元素模块
      * @type {org.eocencle.sepa.Class}
      * @private
-     */
+     *!/
     var _CElement = org.eocencle.sepa.CElement = new _Class();
 
     _CElement.extend({
@@ -612,12 +616,12 @@
         }
     });
 
-    /**
+    /!**
      * Vaildate model
      * 验证模块
      * @type {org.eocencle.sepa.Class}
      * @private
-     */
+     *!/
     var _CVaildate = org.eocencle.sepa.CVaildate = new _Class();
 
     _CVaildate.extend({
@@ -798,6 +802,6 @@
                 }
             }
         }
-    });
+    });*/
 
 })(jQuery);
