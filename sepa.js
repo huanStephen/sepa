@@ -5,7 +5,7 @@
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-1-12
- * Update:  2017-9-17
+ * Update:  2017-9-20
  */
 (function($) {
 
@@ -34,6 +34,7 @@
 
         var klass = function(){
             var inits = new Array;
+            var args = arguments;
             var curr = this;
             do {
                 inits.push(curr.init);
@@ -41,7 +42,7 @@
 
             inits.reverse();
             inits.forEach(this.proxy(function(val, idx, arr) {
-                val.apply(this, []);
+                val.apply(this, args);
             }));
         };
 
@@ -150,6 +151,64 @@
 
         return klass;
     };
+
+    /**
+    * Finite state machine
+    * 有限状态机
+    * @type {Function}
+    * @private
+    */
+    var _StateMachine = org.eocencle.sepa.StateMachine = new _Class();
+
+    _StateMachine.include({
+        on : function(name, callback) {
+            if (!name || !callback) {
+                return;
+            }
+            if (!this._handlers) {
+                this._handlers = {};
+            }
+            if (!this._handlers[name]) {
+                this._handlers[name] = [];
+            }
+            this._handlers[name].push(callback);
+        },
+
+        trigger : function(name) {
+            if (!this._handlers) {
+                return;
+            }
+
+            var args = $.makeArray(arguments);
+            var name = args.shift();
+
+            var callbacks = this._handlers[name];
+            if (!callbacks) {
+                return;
+            }
+
+            callbacks.forEach(this.proxy(function(val, idx, arr) {
+                val.apply(this, args);
+            }));
+        },
+
+        setup : function(nameArr){
+            if (nameArr instanceof Array) {
+                nameArr.forEach(this.proxy(function(val, idx, arr) {
+                    this[val] = function() {
+                        var args = $.makeArray(arguments);
+                        if ('function' == typeof args[0]) {
+                            args.unshift(val);
+                            this.on.apply(this, args);
+                        } else {
+                            args.unshift(val);
+                            this.trigger.apply(this, args);
+                        }
+                    }
+                }));
+            }
+        }
+    });
 
     /**
      * Data model

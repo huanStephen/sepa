@@ -131,8 +131,35 @@
     SuperEvent.test(function() {
         console.log('YES');
     });
-    SuperEvent.test('test');
+    SuperEvent.test(function(arg) {
+        console.log(arg);
+    });
+    SuperEvent.test('hello');
+    SuperEvent.test('world');
 
+})();
+
+(function() {
+
+    var sepa = org.eocencle.sepa;
+
+    var sm = new sepa.StateMachine;
+
+    sm.a = 'hello world';
+
+    sm.setup(['test']);
+
+    sm.test(function() {
+        console.log(this.a);
+        console.log('OK');
+    });
+
+    sm.test(function() {
+        console.log(this.a);
+        console.log('YES');
+    });
+
+    sm.test();
 })();
 
 /*
