@@ -23,6 +23,12 @@
     var Reptile = new sepa.Class(Animal);
 
     Reptile.include({
+        a : {
+            b : {
+                c : 'OK'
+            }
+        },
+
         init : function() {
             console.log('Reptile init');
         },
@@ -38,6 +44,10 @@
     var Tortoies = new sepa.Class(Reptile);
 
     Tortoies.include({
+        a : {
+            d : 'YES'
+        },
+
         init : function() {
             console.log('Tortoies init');
             this.run();
@@ -49,6 +59,8 @@
     });
 
     var tortoies = new Tortoies;
+    console.log(tortoies.a.b.c);
+    console.log(tortoies.a.d);
     tortoies.eat();
 
     var Fish = new sepa.Class(Animal);
@@ -392,7 +404,7 @@
 
 })();
 
-/*
+
 (function() {
     var sepa = org.eocencle.sepa;
 
@@ -515,7 +527,7 @@
             this.component('remote', ['test']);
             this.ajaxFunc = this.component('bind', ['name', '/user/name']);
 
-            var Statem = new sepa.Class(sepa.StateMachine);
+            /*var Statem = new sepa.Class(sepa.StateMachine);
             this.sm = new Statem(this);
             var Event = new sepa.Class(sepa.Event);
             var e1 = new Event('state1', function() {
@@ -529,7 +541,7 @@
             });
             this.sm.addEvent(e1);
             this.sm.addEvent(e2);
-            this.sm.addEvent(e3);
+            this.sm.addEvent(e3);*/
         },
 
         requiredClick : function() {
@@ -721,4 +733,4 @@
     });
 
     new DomCtrl('div.render');
-})();*/
+})();

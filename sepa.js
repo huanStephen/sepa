@@ -216,7 +216,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    /*var _BaseModel = org.eocencle.sepa.BaseModel = new _Class();
+    var _BaseModel = org.eocencle.sepa.BaseModel = new _Class();
 
     _BaseModel.extend({
         //属性字段
@@ -228,10 +228,10 @@
         //排序
         _sort : [],
 
-        /!**
+        /**
          * 创建数据模型
          * @param attrArray 属性数组
-         *!/
+         */
         create : function(attrArray) {
             var chkId = false;
             for(var i in attrArray) {
@@ -244,27 +244,27 @@
             if(chkId) this._attributes = attrArray;
             else throw('Required id!');
         },
-        /!**
+        /**
          * 查找记录
          * @param id    记录ID
-         *!/
+         */
         find : function(id) {
             var result = this._records[id];
             if(!result) throw('Unkown record!');
             return result;
         },
-        /!**
+        /**
          * 清空全部记录
-         *!/
+         */
         clear : function() {
             this._records = {};
             this._count = 0;
             this._sort.splice(0, this._sort.length);
         },
-        /!**
+        /**
          * 批量添加数据
          * @param array 数组格式数据
-         *!/
+         */
         populate : function(array) {
             this.clear();
 
@@ -274,17 +274,17 @@
                 recode.save();
             }
         },
-        /!**
+        /**
          * 获取数据个数
          * @returns {number}    数据个数
-         *!/
+         */
         count : function() {
             return this._count;
         },
-        /!**
+        /**
          * 获取全部数据
          * @returns {_records|{}}   全部数据
-         *!/
+         */
         all : function() {
             var result = new Array();
             for(var i in this._sort) result.push(this._records[this._sort[i]]);
@@ -292,155 +292,157 @@
         }
     });
 
-    /!**
+    /**
      * Data entity model
      * 实例模型
      * @type {org.eocencle.sepa.Class}
      * @private
-     *!/
+     */
     var _Model = org.eocencle.sepa.Model = new _Class();
 
     _Model.include({
         //是否新数据
         _newRecord : true,
-        /!**
+        /**
          * 初始化数据模型
          * @param attributes    数据
-         *!/
+         */
         init : function(attributes) {
             attributes && this.load(attributes);
         },
-        /!**
+        /**
          * 加载数据
          * @param attributes    数据
-         *!/
+         */
         load : function(attributes) {
             for (var name in attributes)
                 this[name] = attributes[name];
         },
-        /!**
+        /**
          * 创建记录
-         *!/
+         */
         create : function() {
             this._newRecord = false;
-            this._static._records[this.id] = this.dup();
-            this._static._count ++;
-            this._static._sort.push(this.id);
+            this._class._records[this.id] = this.dup();
+            this._class._count ++;
+            this._class._sort.push(this.id);
         },
-        /!**
+        /**
          * 更新记录
-         *!/
+         */
         update : function() {
-            this._static._records[this.id] = this.dup();
+            this._class._records[this.id] = this.dup();
         },
-        /!**
+        /**
          * 保存记录
-         *!/
+         */
         save : function() {
             this._newRecord ? this.create() : this.update();
         },
-        /!**
+        /**
          * 销毁记录
-         *!/
+         */
         destroy : function() {
-            delete this._static._records[this.id];
-            this._static._count --;
-            var sort = this._static._sort;
+            delete this._class._records[this.id];
+            this._class._count --;
+            var sort = this._class._sort;
             for(var i=0; i < sort.length; i++) {
                 if(sort[i] == this.id) {
-                    this._static._sort.splice(i, 1);
+                    this._class._sort.splice(i, 1);
                     break;
                 }
             }
         },
-        /!**
+        /**
          * 获取属性对象
          * @returns 属性对象
-         *!/
+         */
         attributes : function() {
             var result = {};
-            for(var i in this._static._attributes) {
-                var attr = this._static._attributes[i];
+            for(var i in this._class._attributes) {
+                var attr = this._class._attributes[i];
                 result[attr] = this[attr];
             }
             result.id = this.id;
             return result;
         },
-        /!**
+        /**
          * 转化为json
          * @returns {*|属性对象}
-         *!/
+         */
         toJSON : function() {
             var obj = {};
-            var attr = this._static._attributes;
+            var attr = this._class._attributes;
             for(var i in attr)
                 obj[attr[i]] = this[attr[i]];
             return JSON.stringify(obj);
         },
-        /!**
+        /**
          * 将新纪录提交给服务器
          * @param url	请求地址
          * @param callback	回调函数
-         *!/
+         */
         createRemote : function(url, callback) {
             $.post(url, this.attributes(), callback);
         },
-        /!**
+        /**
          * 创建副本
-         *!/
+         */
         dup : function() {
-            return $.extend(true, {}, this);
+            var result = new this._class(this);
+            result._newRecord = this._newRecord;
+            return result;
         },
-        /!**
+        /**
          * 保存到本地
          * @param name  保存名称
-         *!/
+         */
         saveLocal : function(name) {
             localStorage[name] = this.toJSON();
         },
-        /!**
+        /**
          * 读取本地信息
          * @param name	保存名称
-         *!/
+         */
         loadLocal : function(name) {
             this.load(JSON.parse(localStorage[name] || '{}'));
         },
-        /!**
+        /**
          * 删除本地信息
          * @param name  保存名称
-         *!/
+         */
         removeLocal : function(name) {
             localStorage.removeItem(name);
         },
-        /!**
+        /**
          * 保存到会话
          * @param name  保存名称
-         *!/
+         */
         saveSession : function(name) {
             sessionStorage[name] = this.toJSON();
         },
-        /!**
+        /**
          * 读取会话信息
          * @param name  保存名称
-         *!/
+         */
         loadSession : function(name) {
             this.load(JSON.parse(sessionStorage[name] || '{}'));
         },
-        /!**
+        /**
          * 删除会话信息
          * @param name  保存名称
-         *!/
+         */
         removeSession : function(name) {
             sessionStorage.removeItem(name);
         }
     });
 
-    /!**
+    /**
      * Control class
      * 控制类
      * @type {org.eocencle.sepa.Class}
      * @private
-     *!/
+     */
     var _Controller = org.eocencle.sepa.Controller = new _Class();
 
     _Controller.extend({
@@ -502,66 +504,19 @@
             if(!packet || !$.trim(packet)) packet = '_common';
 
             try {
-                return this._static._component[packet][func].apply(this, paramArray);
+                return this._class._component[packet][func].apply(this, paramArray);
             } catch (e) {
                 throw('Component call error! \n' + e);
             }
         }
     });
 
-    /!**
-     * Finite state machine
-     * 有限状态机
-     * @type {Function}
-     * @private
-     *!/
-    var _StateMachine = org.eocencle.sepa.StateMachine = new _Class();
-
-    _StateMachine.include({
-        events : {},
-
-        init : function(content) {
-            this.content = content;
-        },
-
-        addEvent : function(event) {
-            if(event && event.state && $.trim(event.state)) this.events[event.state] = event;
-        },
-
-        removeEvent : function(state) {
-            delete this.events[state];
-        },
-
-        trigger : function(state) {
-            this.events[state] && this.events[state].event.apply(this.content, arguments);
-        }
-    });
-
-    /!**
-     * State machine event
-     * 状态机事件
-     * @type {Function}
-     * @private
-     *!/
-    var _Event = org.eocencle.sepa.Event = new _Class();
-
-    _Event.include({
-        state : '',
-
-        init : function(state, event) {
-            this.state = state;
-            this.event = event;
-        },
-
-        event : function() {}
-    });
-
-    /!**
+    /**
      * Remote call model
      * 远程调用模块
      * @type {org.eocencle.sepa.Class}
      * @private
-     *!/
+     */
     var _CRemote = org.eocencle.sepa.CRemote = new _Class();
 
     _CRemote.extend({
@@ -612,12 +567,12 @@
         }
     });
 
-    /!**
+    /**
      * Element model
      * 元素模块
      * @type {org.eocencle.sepa.Class}
      * @private
-     *!/
+     */
     var _CElement = org.eocencle.sepa.CElement = new _Class();
 
     _CElement.extend({
@@ -675,12 +630,12 @@
         }
     });
 
-    /!**
+    /**
      * Vaildate model
      * 验证模块
      * @type {org.eocencle.sepa.Class}
      * @private
-     *!/
+     */
     var _CVaildate = org.eocencle.sepa.CVaildate = new _Class();
 
     _CVaildate.extend({
@@ -861,6 +816,6 @@
                 }
             }
         }
-    });*/
+    });
 
 })(jQuery);
