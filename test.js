@@ -99,7 +99,7 @@
 
     var sm = new sepa.StateMachine;
 
-    sm.a = 'hello world';
+    var a = 'hello world';
 
     sm.setup(['test']);
 
@@ -492,7 +492,7 @@
 (function() {
     var sepa = org.eocencle.sepa;
 
-    var Ctrl = new sepa.Class([sepa.Controller, sepa.CRemote, sepa.CVaildate, sepa.CElement]);
+    var Ctrl = new sepa.Class([sepa.Controller, sepa.CRemote, sepa.CVaildate, sepa.CElement, sepa.StateMachine]);
 
     Ctrl.include({
         elements : {
@@ -527,21 +527,16 @@
             this.component('remote', ['test']);
             this.ajaxFunc = this.component('bind', ['name', '/user/name']);
 
-            /*var Statem = new sepa.Class(sepa.StateMachine);
-            this.sm = new Statem(this);
-            var Event = new sepa.Class(sepa.Event);
-            var e1 = new Event('state1', function() {
+            this.setup(['status1', 'status2', 'status3']);
+            this.status1(function() {
                 this.$output.text('state1');
             });
-            var e2 = new Event('state2', function() {
+            this.status2(function() {
                 this.$output.text('state2');
             });
-            var e3 = new Event('state3', function() {
+            this.status3(function() {
                 this.$output.text('state3');
             });
-            this.sm.addEvent(e1);
-            this.sm.addEvent(e2);
-            this.sm.addEvent(e3);*/
         },
 
         requiredClick : function() {
@@ -566,16 +561,16 @@
         },
 
         state1Click : function(event) {
-            this.sm.trigger('state1');
+            this.status1();
         },
 
         state2Click : function(event) {
-            this.sm.trigger('state2');
-            this.sm.removeEvent('state2');
+            this.status2();
+            this.status2('delete');
         },
 
         state3Click : function(event) {
-            this.sm.trigger('state3');
+            this.status3();
         }
     });
 

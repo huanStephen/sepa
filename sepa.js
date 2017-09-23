@@ -32,7 +32,7 @@
      */
     var _Class = org.eocencle.sepa.Class = function(parent) {
 
-        var klass = function(){
+        var klass = function() {
             var inits = new Array;
             var args = arguments;
             var curr = this;
@@ -60,11 +60,32 @@
             }
         };
 
-        klass._copy = function(obj) {
-            if ('function' == typeof obj) return obj;
-            if ('object' != typeof obj) return obj;
-            if ($.isArray(obj)) return $.extend(true, [], obj);
-            return $.extend(true, {}, obj);
+        klass._merge = function(obj1, obj2) {
+            if (!obj1) {
+                return obj2;
+            }
+
+            if (typeof obj1 != typeof obj2) {
+                throw TypeError('Merge object types are inconsistent!\n#obj1=' + typeof obj1 + ',#obj2=' +
+                    typeof obj2);
+            }
+
+            if (obj2 instanceof Function || obj2 instanceof Array) {
+                return obj2;
+            }
+
+            if (obj2 instanceof Object) {
+                var result = Object.assign({}, obj1);
+                for (var i in obj2) {
+                    if (obj2[i] instanceof Object) {
+                        result[i] = klass._merge(obj1[i], obj2[i]);
+                    } else {
+                        result[i] = obj2[i];
+                    }
+                }
+                return result;
+            }
+            return obj2;
         };
 
         if (parent) {
@@ -100,10 +121,10 @@
             }
 
             for (var i in parent) {
-                klass[i] = klass._copy(parent[i]);
+                klass[i] = klass._merge(klass[i], parent[i]);
             }
             for (var i in parent.prototype) {
-                klass.prototype[i] = klass._copy(parent.prototype[i]);
+                klass.prototype[i] = klass._merge(klass.prototype[i], parent.prototype[i]);
             }
             klass._super = parent;
             klass.prototype._super = parent.prototype;
@@ -111,23 +132,27 @@
 
         klass.fn = klass.prototype;
 
-        klass.extend = function(obj){
+        klass.extend = function(obj) {
             var extended = obj.extended;
             for(var i in obj){
-                klass[i] = obj[i];
+                klass[i] = klass._merge(klass[i], obj[i]);
             }
-            if (extended) extended(klass)
+            if (extended) {
+                extended(klass);
+            }
         };
 
-        klass.include = function(obj){
+        klass.include = function(obj) {
             var included = obj.included;
             for(var i in obj){
-                klass.fn[i] = obj[i];
+                klass.fn[i] = klass._merge(klass.fn[i], obj[i]);
             }
-            if (included) included(klass)
+            if (included) {
+                included(klass);
+            }
         };
 
-        klass.proxy = function(func){
+        klass.proxy = function(func) {
             var self = this;
             return (function() {
                 return func.apply(self, arguments);
@@ -137,7 +162,7 @@
 
         klass.fn._class = klass;
 
-        Object.defineProperty(klass, '_copy', {enumerable : false});
+        Object.defineProperty(klass, '_merge', {enumerable : false});
         Object.defineProperty(klass, '_super', {enumerable : false});
         Object.defineProperty(klass, 'extend', {enumerable : false});
         Object.defineProperty(klass, 'include', {enumerable : false});
@@ -158,9 +183,10 @@
     * @type {Function}
     * @private
     */
-    var _StateMachine = org.eocencle.sepa.StateMachine = new _Class();
+    var _StateMachine = org.eocencle.sepa.StateMachine = new _Class;
 
     _StateMachine.include({
+
         on : function(name, callback) {
             if (!name || !callback) {
                 return;
@@ -192,7 +218,13 @@
             }));
         },
 
-        setup : function(nameArr){
+        delEvent : function(name) {
+            if (this._handlers[name]) {
+                delete this._handlers[name];
+            }
+        },
+
+        setup : function(nameArr) {
             if (nameArr instanceof Array) {
                 nameArr.forEach(this.proxy(function(val, idx, arr) {
                     this[val] = function() {
@@ -200,6 +232,8 @@
                         if ('function' == typeof args[0]) {
                             args.unshift(val);
                             this.on.apply(this, args);
+                        } else if ('delete' == args[0]) {
+                            this.delEvent.call(this, val);
                         } else {
                             args.unshift(val);
                             this.trigger.apply(this, args);
@@ -216,7 +250,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _BaseModel = org.eocencle.sepa.BaseModel = new _Class();
+    var _BaseModel = org.eocencle.sepa.BaseModel = new _Class;
 
     _BaseModel.extend({
         //属性字段
@@ -298,7 +332,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _Model = org.eocencle.sepa.Model = new _Class();
+    var _Model = org.eocencle.sepa.Model = new _Class;
 
     _Model.include({
         //是否新数据
@@ -443,7 +477,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _Controller = org.eocencle.sepa.Controller = new _Class();
+    var _Controller = org.eocencle.sepa.Controller = new _Class;
 
     _Controller.extend({
         //扩展组件
@@ -517,7 +551,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _CRemote = org.eocencle.sepa.CRemote = new _Class();
+    var _CRemote = org.eocencle.sepa.CRemote = new _Class;
 
     _CRemote.extend({
         _component : {
@@ -573,7 +607,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _CElement = org.eocencle.sepa.CElement = new _Class();
+    var _CElement = org.eocencle.sepa.CElement = new _Class;
 
     _CElement.extend({
         _component : {
@@ -636,7 +670,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _CVaildate = org.eocencle.sepa.CVaildate = new _Class();
+    var _CVaildate = org.eocencle.sepa.CVaildate = new _Class;
 
     _CVaildate.extend({
         _component : {
