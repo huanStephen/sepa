@@ -90,32 +90,6 @@
     var flyFish = new FlyFish;
     flyFish.fly();
 })();
-/**
- * 状态机测试
- */
-(function() {
-
-    var sepa = org.eocencle.sepa;
-
-    var sm = new sepa.StateMachine;
-
-    var a = 'hello world';
-
-    sm.setup(['test']);
-
-    sm.test(function() {
-        console.log(this.a);
-        console.log('OK');
-    });
-
-    sm.test(function(content) {
-        console.log(this.a);
-        console.log('YES');
-        console.log(content);
-    });
-
-    sm.test('content');
-})();
 
 (function() {
     var sepa = org.eocencle.sepa;
@@ -487,6 +461,10 @@
         {id : 2, password : '654321', salt : 'bb'}
     ]);
 
+    Pwd.each(function(val, idx, arr) {
+        console.log(val.id + ',' + val.password + ',' + val.salt);
+    });
+
 })();
 
 (function() {
@@ -728,4 +706,35 @@
     });
 
     new DomCtrl('div.render');
+})();
+/**
+ * mvvm测试
+ */
+(function() {
+    var data = {content : ''};
+
+    function observe(data) {
+        if (!data || typeof data !== 'object') {
+            return;
+        }
+        // 取出所有属性遍历
+        Object.keys(data).forEach(function(key) {
+            defineReactive(data, key, data[key]);
+        });
+    }
+
+    function defineReactive(data, key, val) {
+        observe(val); // 监听子属性
+        Object.defineProperty(data, key, {
+            set: function(newVal) {
+                $('label', 'div.mvvm').text(newVal);
+                val = newVal;
+            }
+        });
+    }
+
+    observe(data);
+    $('div.mvvm').on('input propertychange', 'input', function() {
+        data.content = $(this).val();
+    });
 })();

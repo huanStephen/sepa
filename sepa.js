@@ -5,7 +5,7 @@
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-1-12
- * Update:  2017-9-20
+ * Update:  2017-9-24
  */
 (function($) {
 
@@ -257,8 +257,6 @@
         _attributes : [],
         //保存资源对象
         _records : {},
-        //资源个数
-        _count : 0,
         //排序
         _sort : [],
 
@@ -268,15 +266,17 @@
          */
         create : function(attrArray) {
             var chkId = false;
-            for(var i in attrArray) {
-                if(attrArray[i] === 'id') {
+            attrArray.forEach(function(val, idx, arr) {
+                if(val === 'id') {
                     chkId = true;
-                    break;
                 }
-            }
+            });
 
-            if(chkId) this._attributes = attrArray;
-            else throw('Required id!');
+            if (chkId) {
+                this._attributes = attrArray;
+            } else {
+                throw('Required id!');
+            }
         },
         /**
          * 查找记录
@@ -284,7 +284,9 @@
          */
         find : function(id) {
             var result = this._records[id];
-            if(!result) throw('Unkown record!');
+            if (!result) {
+                throw('Unkown record!');
+            }
             return result;
         },
         /**
@@ -292,7 +294,6 @@
          */
         clear : function() {
             this._records = {};
-            this._count = 0;
             this._sort.splice(0, this._sort.length);
         },
         /**
@@ -303,7 +304,7 @@
             this.clear();
 
             var recode;
-            for(var i = 0, il = array.length; i < il; i++) {
+            for (var i = 0, il = array.length; i < il; i++) {
                 recode = new this(array[i]);
                 recode.save();
             }
@@ -313,16 +314,27 @@
          * @returns {number}    数据个数
          */
         count : function() {
-            return this._count;
+            return this.all().length;
         },
         /**
          * 获取全部数据
          * @returns {_records|{}}   全部数据
          */
         all : function() {
-            var result = new Array();
-            for(var i in this._sort) result.push(this._records[this._sort[i]]);
+            var result = new Array;
+            this._sort.forEach(this.proxy(function(val, idx, arr) {
+                result.push(this._records[val]);
+            }));
             return result;
+        },
+        /**
+         *  遍历数据
+         * @param callback  回调函数
+         */
+        each : function(callback) {
+            for (var i in this._sort) {
+                callback.call(this, this._records[this._sort[i]], this._sort[i], this._records);
+            }
         }
     });
 
@@ -358,7 +370,6 @@
         create : function() {
             this._newRecord = false;
             this._class._records[this.id] = this.dup();
-            this._class._count ++;
             this._class._sort.push(this.id);
         },
         /**
@@ -378,9 +389,8 @@
          */
         destroy : function() {
             delete this._class._records[this.id];
-            this._class._count --;
             var sort = this._class._sort;
-            for(var i=0; i < sort.length; i++) {
+            for (var i = 0; i < sort.length; i++) {
                 if(sort[i] == this.id) {
                     this._class._sort.splice(i, 1);
                     break;
@@ -393,10 +403,9 @@
          */
         attributes : function() {
             var result = {};
-            for(var i in this._class._attributes) {
-                var attr = this._class._attributes[i];
-                result[attr] = this[attr];
-            }
+            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
+                result[val] = this[val];
+            }));
             result.id = this.id;
             return result;
         },
@@ -406,9 +415,9 @@
          */
         toJSON : function() {
             var obj = {};
-            var attr = this._class._attributes;
-            for(var i in attr)
-                obj[attr[i]] = this[attr[i]];
+            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
+                obj[val] = this[val];
+            }));
             return JSON.stringify(obj);
         },
         /**
@@ -417,7 +426,14 @@
          * @param callback	回调函数
          */
         createRemote : function(url, callback) {
-            $.post(url, this.attributes(), callback);
+            // 防止400错误
+            var params = this.attributes();
+            for (var i in params) {
+                if (!params[i]) {
+                    delete params[i];
+                }
+            }
+            $.post(url, params, callback);
         },
         /**
          * 创建副本
