@@ -697,13 +697,22 @@
     DomCtrl.include({
 
         elements : {
-            'div.test1' : 'test1'
+            'div.test1' : 'test1',
+            'input[name="radio"]' : 'radio',
+            'input[name="checkbox"]' : 'checkbox'
         },
 
         load : function() {
             this.component('domRenderRole', [false, this.test1, '张三']);
             this.component('domRenderRole', [false, this.test1, 'color:red;', 'style']);
             console.log(this.component('domRenderRole', [true, this.test1, '', 'class']));
+
+            this.component('domRenderRole', [false, this.radio, '2']);
+            console.log('cls:' + this.component('domRenderRole', [true, this.radio]));
+            this.component('domRenderRole', [false, this.checkbox, '2']);
+            console.log('like:' + this.component('domRenderRole', [true, this.checkbox]));
+            this.component('domRenderRole', [false, this.checkbox, '1,3']);
+            console.log('like:' + this.component('domRenderRole', [true, this.checkbox]));
         }
 
     });

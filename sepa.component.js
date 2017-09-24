@@ -28,25 +28,63 @@
 
                     var result = '';
 
+                    if ($el.length && 'INPUT' == $el[0].tagName && 'checkbox' == $el.attr('type') && !isRead) {
+                        $el.removeAttr('checked');
+                    }
                     $el.each(function(idx, el) {
+                        var $el = $(el);
                         if (attr) {
                             if (isRead) {
-                                result += $(el).attr(attr) + ',';
+                                result += $el.attr(attr) + ',';
                             } else {
-                                $(el).attr(attr, value);
+                                $el.attr(attr, value);
                             }
                         } else {
-                            if('INPUT' === el.nodeName || 'TEXTAREA' === el.nodeName || 'SELECT' === el.nodeName) {
-                                if(isRead) {
-                                    result += $(el).val() + ',';
+                            if ('INPUT' === el.nodeName) {
+                                var type = $el.attr('type');
+                                if ('radio' === type) {
+                                    if (isRead) {
+                                        if ($el.attr('checked')) {
+                                            result += $el.val() + ',';
+                                        }
+                                    } else {
+                                        if ($el.val() == value) {
+                                            $el.attr('checked', 'checked');
+                                        } else {
+                                            $el.removeAttr('checked');
+                                        }
+                                    }
+                                } else if ('checkbox' === type) {
+                                    if (isRead) {
+                                        if ($el.attr('checked')) {
+                                            result += $el.val() + ',';
+                                        }
+                                    } else {
+                                        var vals = value.split(',');
+                                        vals.forEach(function(val, idx, arr) {
+                                            if ($el.val() == val) {
+                                                $el.attr('checked', 'checked');
+                                            }
+                                        });
+                                    }
                                 } else {
-                                    $(el).val(value);
+                                    if (isRead) {
+                                        result += $el.val() + ',';
+                                    } else {
+                                        $el.val(value);
+                                    }
+                                }
+                            } else if ('TEXTAREA' === el.nodeName || 'SELECT' === el.nodeName) {
+                                if (isRead) {
+                                    result += $el.val() + ',';
+                                } else {
+                                    $el.val(value);
                                 }
                             } else {
-                                if(isRead) {
-                                    result += $(el).text() + ',';
+                                if (isRead) {
+                                    result += $el.text() + ',';
                                 } else {
-                                    $(el).text(value);
+                                    $el.text(value);
                                 }
                             }
                         }
