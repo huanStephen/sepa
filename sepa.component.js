@@ -1,16 +1,16 @@
 /**
  * Sepa.Component
  *
- * Version: 2.1.0
+ * Version: 3.0.0
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-4-27
- * Update:  2017-4-27
+ * Update:  2017-9-24
  */
 (function() {
     var sepa = org.eocencle.sepa;
 
-    var _CDomRenderRole = sepa.CDomRenderRole = new sepa.Class();
+    var _CDomRenderRole = sepa.CDomRenderRole = new sepa.Class;
     /**
      * Dom映射规则
      * isRead：true为读取，false为写入
@@ -22,13 +22,15 @@
         _component : {
             _common : {
                 domRenderRole : function(isRead, $el, value, attr) {
-                    if(!$el || $el.length == 0) throw('Invalid element');
+                    if (!$el || 0 == $el.length) {
+                        throw('Invalid element');
+                    }
 
                     var result = '';
 
                     $el.each(function(idx, el) {
-                        if(attr) {
-                            if(isRead) {
+                        if (attr) {
+                            if (isRead) {
                                 result += $(el).attr(attr) + ',';
                             } else {
                                 $(el).attr(attr, value);
@@ -50,8 +52,10 @@
                         }
                     });
 
-                    if(isRead) {
-                        if(result !== '') result = result.substring(0, result.length - 1);
+                    if (isRead) {
+                        if ('' !== result) {
+                            result = result.substring(0, result.length - 1);
+                        }
                         return result;
                     }
                 }
@@ -59,7 +63,7 @@
         }
     });
 
-    var _CCombVaildate = sepa.CCombVaildate = new sepa.Class();
+    var _CCombVaildate = sepa.CCombVaildate = new sepa.Class;
     /**
      * 组合验证
      * model：数据模型，验证完毕后填充的数据
@@ -73,15 +77,17 @@
                     var attrs = model.attributes();
 
                     var result = true, msg = '';
-                    for(var name in attrs) {
-                        if(!name || !this[name]) continue;
+                    for (var name in attrs) {
+                        if (!name || !this[name]) {
+                            continue;
+                        }
 
                         var val = this.component('domRenderRole', [true, this[name]]);
 
-                        if(vailds[name]) {
+                        if (vailds[name]) {
                             var vs = $.extend(true, {}, vailds[name]);
 
-                            for(var idx in vs) {
+                            for (var idx in vs) {
                                 if(msg) break;
 
                                 vs[idx].push(val);
@@ -90,7 +96,9 @@
                                 errMsgFun.call(this[name], errMsg);
                             }
 
-                            if(!msg) model[name] = val;
+                            if (!msg) {
+                                model[name] = val;
+                            }
                             result = result && !msg;
                             msg = '';
                         } else {
@@ -103,7 +111,7 @@
         }
     });
 
-    var _CPage = sepa.CPage = new sepa.Class();
+    var _CPage = sepa.CPage = new sepa.Class;
     /**
      * 分页组件
      * {
@@ -129,11 +137,13 @@
             _common: {
                 openPage : function(cfgName) {
                     var cfg = this.pageCfg = this.config[cfgName];
-                    if(!cfg) throw('缺少名为' + cfgName + '的配置！');
+                    if (!cfg) {
+                        throw ReferenceError('Configuration of #' + cfgName + ' is not found!');
+                    }
                     var $el = $(cfg.container);
-                    $el.on('click','.prev' , this.proxy(this[cfg.methods.prevMethod]));
-                    $el.on('click','.next' , this.proxy(this[cfg.methods.nextMethod]));
-                    $el.on('click','.num' , this.proxy(this[cfg.methods.pageMethod]));
+                    $el.on('click','.prev', this.proxy(this[cfg.methods.prevMethod]));
+                    $el.on('click','.next', this.proxy(this[cfg.methods.nextMethod]));
+                    $el.on('click','.num', this.proxy(this[cfg.methods.pageMethod]));
                 },
                 paginate : function(currPage, totalPage) {
                     var cfg = this.pageCfg;
@@ -142,7 +152,9 @@
 
                     var openFontPos = false;
                     var btnFontPos = cfg.btnFontPos;
-                    if(btnFontPos) openFontPos = true;
+                    if (btnFontPos) {
+                        openFontPos = true;
+                    }
 
                     var prevBtn = this[cfg.btns.prevBtn];
                     var nextBtn = this[cfg.btns.nextBtn];
@@ -151,18 +163,20 @@
                     var moitBtn = this[cfg.btns.moitBtn];
                     el.empty();
 
-                    if(cfg.block < 5) throw('分页数字块最少为5个！');
+                    if (cfg.block < 5) {
+                        throw('There are at least 5 paging blocks!');
+                    }
 
                     var lr = parseInt(cfg.block / 2);
                     var middle = lr + 1;
 
                     //前页显示控制
-                    if(currPage != 1) {
+                    if (currPage != 1) {
                         el.append(prevBtn.clone());
                     }
-                    if(totalPage <= cfg.block) {
+                    if (totalPage <= cfg.block) {
                         var no;
-                        for(var i = 1; i <= totalPage; i ++) {
+                        for (var i = 1; i <= totalPage; i ++) {
                             if(currPage == i) {
                                 no = actBtn.clone();
                             } else {
@@ -187,13 +201,13 @@
                             };
                         }
                         //前面有省略
-                        if(before > 1 && currPage >= after) {
+                        if (before > 1 && currPage >= after) {
                             no = pageBtn.clone();
                             openFontPos ? $(btnFontPos, no).text(1) : no.text(1);
                             el.append(no);
                             el.append(moitBtn.clone());
                             var sw = lr + (middle - (totalPage - currPage)) - 1;
-                            for(var i = sw; i >= 1; i --) {
+                            for (var i = sw; i >= 1; i --) {
                                 no = pageBtn.clone();
                                 openFontPos ? $(btnFontPos, no).text(currPage - i) : no.text(currPage - i);
                                 el.append(no);
@@ -201,14 +215,14 @@
                             no = actBtn.clone();
                             openFontPos ? $(btnFontPos, no).text(currPage) : no.text(currPage);
                             el.append(no);
-                            for(var i = currPage + 1; i <= totalPage; i ++) {
+                            for (var i = currPage + 1; i <= totalPage; i ++) {
                                 no = pageBtn.clone();
                                 openFontPos ? $(btnFontPos, no).text(i) : no.text(i);
                                 el.append(no);
                             };
                         }
                         //后面有省略
-                        if(before <= 1 && currPage < after) {
+                        if (before <= 1 && currPage < after) {
                             for(var i = 1; i <= currPage; i ++) {
                                 if(currPage == i) {
                                     no = actBtn.clone();
@@ -219,7 +233,7 @@
                                 el.append(no);
                             }
                             var sw = lr + (middle - (currPage - 1)) - 1;
-                            for(var i = 1; i <= sw; i ++) {
+                            for (var i = 1; i <= sw; i ++) {
                                 no = pageBtn.clone();
                                 openFontPos ? $(btnFontPos, no).text(currPage + i) : no.text(currPage + i);
                                 el.append(no);
@@ -230,12 +244,12 @@
                             el.append(no);
                         }
                         //前后都有省略
-                        if(before > 1 && currPage < after) {
+                        if (before > 1 && currPage < after) {
                             no = pageBtn.clone();
                             openFontPos ? $(btnFontPos, no).text(1) : no.text(1);
                             el.append(no);
                             el.append(moitBtn.clone());
-                            for(var i = lr; i >= 1; i --) {
+                            for (var i = lr; i >= 1; i --) {
                                 no = pageBtn.clone();
                                 openFontPos ? $(btnFontPos, no).text(currPage - i) : no.text(currPage - i);
                                 el.append(no);
@@ -243,7 +257,7 @@
                             no = actBtn.clone();
                             openFontPos ? $(btnFontPos, no).text(currPage) : no.text(currPage);
                             el.append(no);
-                            for(var i = 1; i <= lr; i ++) {
+                            for (var i = 1; i <= lr; i ++) {
                                 no = pageBtn.clone();
                                 openFontPos ? $(btnFontPos, no).text(currPage + i) : no.text(currPage + i);
                                 el.append(no);
@@ -255,7 +269,7 @@
                         };
                     }
                     //后页显示控制
-                    if(totalPage != 0 && currPage != totalPage) {
+                    if (totalPage != 0 && currPage != totalPage) {
                         el.append(nextBtn.clone());
                     };
                 }

@@ -481,12 +481,12 @@
         },
 
         events : {
-            'click .required .requiredBtn' : 'requiredClick',
-            'mouseout .ajax .name' : 'ajaxMouseout',
-            'click .ajax .ajaxBtn' : 'ajaxClick',
-            'click .state .state1' : 'state1Click',
-            'click .state .state2' : 'state2Click',
-            'click .state .state3' : 'state3Click'
+            'click->.required .requiredBtn' : 'requiredClick',
+            'mouseout->.ajax .name' : 'ajaxMouseout',
+            'click->.ajax .ajaxBtn' : 'ajaxClick',
+            'click->.state .state1' : 'state1Click',
+            'click->.state .state2' : 'state2Click',
+            'click->.state .state3' : 'state3Click'
         },
 
         config : {
@@ -502,7 +502,10 @@
         },
 
         load : function() {
-            this.component('remote', ['test']);
+            this.component('remote', ['test', function(config) {
+                console.log(this.config.test.params.name);
+                config.params.name += 'OK';
+            }]);
             this.ajaxFunc = this.component('bind', ['name', '/user/name']);
 
             this.setup(['status1', 'status2', 'status3']);
@@ -725,11 +728,9 @@
 
     function defineReactive(data, key, val) {
         observe(val); // 监听子属性
-        Object.defineProperty(data, key, {
-            set: function(newVal) {
-                $('label', 'div.mvvm').text(newVal);
-                val = newVal;
-            }
+        data.__defineSetter__(key, function(newVal) {
+            $('label', 'div.mvvm').text(newVal);
+            val = newVal;
         });
     }
 

@@ -501,53 +501,65 @@
     });
 
     _Controller.include({
-        //配置
+        // 配置
         config : {},
 
         init : function(element) {
             this._el = $(element);
-            this.refreshElements();
-            this.searchGlobals();
-            this.delegateEvents();
-            this.pickBlocks();
-            this.load && this.load();
+            this._refreshElements();
+            this._searchGlobals();
+            this._delegateEvents();
+            this._pickBlocks();
+            this.load && this.load(this._el);
         },
 
         $ : function(selector) {
             return $(selector, this._el);
         },
-        //根据第一个空格来分隔
-        eventSplitter : /^(\w+)\s*(.*)$/,
+        // 根据->来分隔
+        _eventSplitter : '->',
 
-        delegateEvents: function() {
+        _delegateEvents: function() {
             for(var key in this.events) {
                 var methodName = this.events[key];
-                var method = this.proxy(this[methodName]);
-                var match = key.match(this.eventSplitter);
-                if(match == undefined) throw(this.events[key] + ' Bind error!');
-                var eventName = match[1];
-                var selector = match[2];
-                if(selector === '') {
-                    this._el.bind(eventName, method);
+                var match = key.split(this._eventSplitter);
+                var eventName = null, selector = null;
+                if (2 == match.length) {
+                    eventName = match[0];
+                    selector = match[1];
+                } else if (1 == match.length) {
+                    eventName = match[0];
+                    selector = this._el;
                 } else {
-                    this._el.on(eventName, selector, method);
+                    throw(this.events[key] + ' Bind error!');
+                }
+
+                if (this[methodName]) {
+                    this._el.on(eventName, selector, {method : methodName}, this.proxy(function(event) {
+                        this[event.data.method].call(this, event, this.$(event.target), event.target.tagName);
+                    }));
+                } else {
+                    throw ReferenceError('Function of #' + methodName + ' is not found!');
                 }
             }
         },
 
-        refreshElements : function() {
-            for(var key in this.elements)
+        _refreshElements : function() {
+            for (var key in this.elements) {
                 this[this.elements[key]] = this.$(key);
+            }
         },
 
-        searchGlobals : function() {
-            for(var key in this.globals)
+        _searchGlobals : function() {
+            for (var key in this.globals) {
                 this[this.globals[key]] = $(key);
+            }
         },
 
-        pickBlocks : function() {
-            for(var key in this.blocks)
+        _pickBlocks : function() {
+            for (var key in this.blocks) {
                 this[this.blocks[key]] = this.$(this[key]()).clone();
+            }
         },
 
         component : function(func, paramArray, packet) {
@@ -572,7 +584,7 @@
     _CRemote.extend({
         _component : {
             _common : {
-                remote : function(cfgName) {
+                remote : function(cfgName, beforeFunc) {
                     var defcfg = {
                         path : '',
                         method : 'get',
@@ -580,36 +592,48 @@
                         callback : ''
                     };
 
-                    if(!$.trim(cfgName)) throw('No configuration!');
+                    if (!$.trim(cfgName)) {
+                        throw('No configuration!');
+                    }
 
                     var cfg = this.config[cfgName];
-                    if(!cfg) throw('No configuration!');
+                    if (!cfg) {
+                        throw ReferenceError('Configuration of #' + cfgName + ' is not found!');
+                    }
 
-                    if(!cfg.path || !$.trim(cfg.path)) throw('Required path!');
-                    if(!cfg.callback || !$.trim(cfg.callback)) throw('Required callback!');
+                    if (!cfg.path || !$.trim(cfg.path)) {
+                        throw('Required path!');
+                    }
+                    if (!cfg.callback || !$.trim(cfg.callback)) {
+                        cfg.callback = cfgName + 'Result';
+                    }
 
                     var config = Object.assign(defcfg, cfg);
 
-                    if(!config.method || !$.trim(config.method) ||
-                        $.trim(config.method).toLocaleLowerCase() === 'get') {
-                        if(config.params && $.trim(config.params)) {
+                    if (beforeFunc && beforeFunc instanceof Function) {
+                        beforeFunc.call(this, config);
+                    }
+
+                    if (!config.method || !$.trim(config.method) ||
+                        'get' === $.trim(config.method).toLocaleLowerCase()) {
+                        if (config.params && $.trim(config.params)) {
                             $.get(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
-                                'json');
+                                config.callback instanceof Function ?
+                                    config.callback : this.proxy(this[config.callback]), 'json');
                         } else {
                             $.get(config.path,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
-                                'json');
+                                config.callback instanceof Function ?
+                                    config.callback : this.proxy(this[config.callback]), 'json');
                         }
                     } else {
-                        if(config.params && $.trim(config.params)) {
+                        if (config.params && $.trim(config.params)) {
                             $.post(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
-                                'json');
+                                config.callback instanceof Function ?
+                                    config.callback : this.proxy(this[config.callback]), 'json');
                         } else {
                             $.post(config.path,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
-                                'json');
+                                config.callback instanceof Function ?
+                                    config.callback : this.proxy(this[config.callback]), 'json');
                         }
                     }
                 }
@@ -669,7 +693,7 @@
                         label : '<label></label>'
                     };
 
-                    if(elName && $.trim(elName)) {
+                    if (elName && $.trim(elName)) {
                         if(defEl[elName])
                             return $(defEl[elName]);
                     } else {
@@ -714,7 +738,7 @@
                     var rule = $.trim(arguments[0]);
                     var errMsg = arguments[1];
                     var params = Array.prototype.slice.call(arguments,2);
-                    if(rule && defMsg[rule]) {
+                    if (rule && defMsg[rule]) {
                         if (rule === 'remote' ? this.component('chkRemote', params)
                                 : this.component(rule, params)) {
                             return '';
@@ -743,7 +767,9 @@
 
                     config.path = path;
                     config.callback = this.proxy(function(data) {
-                        if(data.result) this.config[cfgName].check = 1;
+                        if (data.result) {
+                            this.config[cfgName].check = 1;
+                        }
                     });
 
                     this.config[cfgName] = config;
@@ -752,20 +778,23 @@
                         var cfgName = '_chk' + name;
                         var cfg = this.config[cfgName];
 
-                        if(!cfg) throw('No configuration!');
+                        if (!cfg) {
+                            throw ReferenceError('Configuration of #' + cfgName + ' is not found!');
+                        }
 
-                        cfg.check = 0;
-                        cfg.params[name] = $el.val();
-
-                        this.component('remote', [cfgName]);
+                        this.component('remote', [cfgName, function(config) {
+                            config.check = 0;
+                            config.params[name] = $el.val();
+                        }]);
                     });
 
                     return func;
                 },
 
                 required: function(value) {
-                    if (!value || !$.trim(value))
+                    if (!value || !$.trim(value)) {
                         return false;
+                    }
                     return true;
                 },
                 email: function(value) {
@@ -800,7 +829,7 @@
                     try {
                         max = parseInt(maxlen);
                     } catch (e) {
-                        throw('maxlength:类型转换错误！');
+                        throw TypeError('maxlength:Type paser error!');
                     }
                     return value.length <= maxlen;
                 },
@@ -809,7 +838,7 @@
                     try {
                         min = parseInt(minlen);
                     } catch (e) {
-                        throw('minlength:类型转换错误！');
+                        throw TypeError('minlength:Type paser error!');
                     }
                     return minlen <= value.length;
                 },
@@ -820,7 +849,7 @@
                         min = parseInt(sp[0]);
                         max = parseInt(sp[1]);
                     } catch (e) {
-                        throw('rangelength:类型转换错误！');
+                        throw TypeError('rangelength:Type paser error!');
                     }
                     return min <= value.length && value.length <= max;
                 },
@@ -832,7 +861,7 @@
                         max = parseInt(sp[1]);
                         val = parseInt(value);
                     } catch (e) {
-                        throw('range:类型转换错误！');
+                        throw TypeError('range:Type paser error!');
                     }
                     return min <= val && val <= max;
                 },
@@ -842,7 +871,7 @@
                         m = parseInt(max);
                         v = parseInt(value);
                     } catch (e) {
-                        throw('max:类型转换错误！');
+                        throw TypeError('max:Type paser error!');
                     }
                     return v < m;
                 },
@@ -852,7 +881,7 @@
                         m = parseInt(min);
                         v = parseInt(value);
                     } catch (e) {
-                        throw('min:类型转换错误！');
+                        throw TypeError('min:Type paser error!');
                     }
                     return m < v;
                 },
@@ -861,8 +890,10 @@
                     return chk.test(value);
                 },
                 chkRemote: function (name) {
-                    if (this.config['_chk' + name].check) return true;
-                    else return false;
+                    if (this.config['_chk' + name].check) {
+                        return true;
+                    }
+                    return false;
                 }
             }
         }
