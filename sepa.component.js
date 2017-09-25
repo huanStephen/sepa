@@ -243,7 +243,9 @@
                             no = pageBtn.clone();
                             openFontPos ? $(btnFontPos, no).text(1) : no.text(1);
                             el.append(no);
-                            el.append(moitBtn.clone());
+                            if (1 != currPage - cfg.block) {
+                                el.append(moitBtn.clone());
+                            }
                             var sw = lr + (middle - (totalPage - currPage)) - 1;
                             for (var i = sw; i >= 1; i --) {
                                 no = pageBtn.clone();
@@ -276,7 +278,9 @@
                                 openFontPos ? $(btnFontPos, no).text(currPage + i) : no.text(currPage + i);
                                 el.append(no);
                             }
-                            el.append(moitBtn.clone());
+                            if (cfg.block + 1 != totalPage) {
+                                el.append(moitBtn.clone());
+                            }
                             no = pageBtn.clone();
                             openFontPos ? $(btnFontPos, no).text(totalPage) : no.text(totalPage);
                             el.append(no);
@@ -286,7 +290,9 @@
                             no = pageBtn.clone();
                             openFontPos ? $(btnFontPos, no).text(1) : no.text(1);
                             el.append(no);
-                            el.append(moitBtn.clone());
+                            if (1 != currPage - cfg.block) {
+                                el.append(moitBtn.clone());
+                            }
                             for (var i = lr; i >= 1; i --) {
                                 no = pageBtn.clone();
                                 openFontPos ? $(btnFontPos, no).text(currPage - i) : no.text(currPage - i);
