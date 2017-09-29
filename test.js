@@ -747,4 +747,64 @@
     $('div.mvvm').on('input propertychange', 'input', function() {
         data.content = $(this).val();
     });
+
+    var sepa = org.eocencle.sepa;
+
+    var User = new sepa.Class(sepa.BaseModel);
+    User.create(['id', 'name', 'age', 'sex', 'hobby']);
+
+    var UserEntity = new sepa.Class([User, sepa.Model]);
+
+    UserEntity.include({
+        _triggerEvents : {
+            text : 'input propertychange',
+            password : 'input propertychange',
+            radio : 'change',
+            checkbox : 'change',
+            select : 'change',
+            textarea : 'blur'
+        },
+
+        _bindStatus : {
+            STATUS_COLSE : 0,
+            STATUS_OPEN_VTOM : 1,
+            STATUS_OPEN_MTOV : 2
+        },
+
+        _currStatus : 0,
+        _context : null,
+
+        setupBind : function(status, context) {
+            this._currStatus = status;
+            this._context = context;
+        },
+
+        _bind : function() {
+            if (this._currStatus & this._bindStatus.STATUS_OPEN_VTOM) {
+
+            }
+
+            if (this._currStatus & this._bindStatus.STATUS_OPEN_MTOV) {
+
+            }
+        },
+
+        _observe : function(data) {
+            if (!data || typeof data !== 'object') {
+                return;
+            }
+            // 取出所有属性遍历
+            Object.keys(data).forEach(function(key) {
+                this._defineReactive(data, key, data[key]);
+            });
+        },
+
+        _defineReactive : function(data, key, val) {
+            this._observe(val); // 监听子属性
+            data.__defineSetter__(key, function(newVal) {
+                $('label', 'div.mvvm').text(newVal);
+                val = newVal;
+            });
+        }
+    });
 })();
