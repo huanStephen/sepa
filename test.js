@@ -744,7 +744,7 @@
     }
 
     observe(data);
-    $('div.mvvm').on('input propertychange', 'input', function() {
+    $('div.mvvm').on('input propertychange', '#txt', function() {
         data.content = $(this).val();
     });
 
@@ -765,7 +765,7 @@
             textarea : 'blur'
         },
 
-        _bindStatus : {
+        bindStatus : {
             STATUS_COLSE : 0,
             STATUS_OPEN_VTOM : 1,
             STATUS_OPEN_MTOV : 2
@@ -777,34 +777,72 @@
         setupBind : function(status, context) {
             this._currStatus = status;
             this._context = context;
+
+            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
+                var $el = this._context[val];
+                if ($el && 0 != $el.length) {
+                    var tagName = $el[0].tagName;
+                    var event = null;
+                    if ('INPUT' == tagName) {
+                        event = this._triggerEvents[$el.attr('type')];
+                    } else {
+                        event = this._triggerEvents[tagName.toLowerCase()];
+                    }
+                    if (event) {
+                        this.__defineSetter__(val, this.proxy(function(newVal) {
+                            if (this._currStatus & this.bindStatus.STATUS_OPEN_MTOV) {
+                                $el.val(newVal);
+                            }
+                            val = newVal;
+                        }));
+
+                        $el.on(event, this.proxy(function(event) {
+                            if (this._currStatus & this.bindStatus.STATUS_OPEN_VTOM) {
+                                this[val] = $(event.target).val();
+                                console.log(this[val]);
+                            }
+                        }));
+                    }
+                }
+            }));
         },
 
         _bind : function() {
-            if (this._currStatus & this._bindStatus.STATUS_OPEN_VTOM) {
 
-            }
-
-            if (this._currStatus & this._bindStatus.STATUS_OPEN_MTOV) {
-
-            }
-        },
-
-        _observe : function(data) {
-            if (!data || typeof data !== 'object') {
-                return;
-            }
-            // 取出所有属性遍历
-            Object.keys(data).forEach(function(key) {
-                this._defineReactive(data, key, data[key]);
-            });
-        },
-
-        _defineReactive : function(data, key, val) {
-            this._observe(val); // 监听子属性
-            data.__defineSetter__(key, function(newVal) {
-                $('label', 'div.mvvm').text(newVal);
-                val = newVal;
-            });
         }
     });
+
+    var Ctrl = new sepa.Class([sepa.Controller]);
+
+    Ctrl.include({
+
+        elements : {
+            '#name' : 'name'
+        },
+
+        events : {
+            'click->#mtov' : 'mtovClick',
+            'click->#vtom' : 'vtomClick'
+        },
+
+        load : function() {
+            this.user = new UserEntity();
+            this.user.setupBind(3, this);
+
+            this.user.name = '张三';
+        },
+
+        mtovClick : function() {
+            this.user.name = '李四';
+            this.user._currStatus = this.user.bindStatus.STATUS_OPEN_MTOV;
+        },
+
+        vtomClick : function() {
+            this.user._currStatus = this.user.bindStatus.STATUS_OPEN_VTOM;
+            this.user.name = '王五';
+        }
+
+    });
+
+    new Ctrl('div.mvvm');
 })();
