@@ -354,6 +354,9 @@
          * @param attributes    数据
          */
         init : function(attributes) {
+            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
+                this[val] = null;
+            }));
             attributes && this.load(attributes);
         },
         /**
@@ -484,6 +487,22 @@
          */
         removeSession : function(name) {
             sessionStorage.removeItem(name);
+        },
+        /**
+         * 获取属性值
+         * @param attr  属性名称
+         * @returns {*}
+         */
+        get : function(attr) {
+            return this[attr];
+        },
+        /**
+         *  设置属性值
+         * @param attr  属性名称
+         * @param value 值
+         */
+        set : function(attr, value) {
+            this[attr] = value;
         }
     });
 

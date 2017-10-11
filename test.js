@@ -773,11 +773,12 @@
 
         _currStatus : 0,
         _context : null,
+        _inner : null,
 
         setupBind : function(status, context) {
             this._currStatus = status;
             this._context = context;
-
+            this._inner = {};
             this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
                 var $el = this._context[val];
                 if ($el && 0 != $el.length) {
@@ -789,26 +790,23 @@
                         event = this._triggerEvents[tagName.toLowerCase()];
                     }
                     if (event) {
-                        this.__defineSetter__(val, this.proxy(function(newVal) {
+                        this._inner[val] = this[val] ? this[val] : null;
+                        this._inner.__defineSetter__(val, this.proxy(function(newVal) {
                             if (this._currStatus & this.bindStatus.STATUS_OPEN_MTOV) {
                                 $el.val(newVal);
                             }
-                            val = newVal;
+                            this[val] = newVal;
                         }));
 
                         $el.on(event, this.proxy(function(event) {
                             if (this._currStatus & this.bindStatus.STATUS_OPEN_VTOM) {
-                                this[val] = $(event.target).val();
+                                this._inner[val] = $(event.target).val();
                                 console.log(this[val]);
                             }
                         }));
                     }
                 }
             }));
-        },
-
-        _bind : function() {
-
         }
     });
 
@@ -822,24 +820,29 @@
 
         events : {
             'click->#mtov' : 'mtovClick',
-            'click->#vtom' : 'vtomClick'
+            'click->#vtom' : 'vtomClick',
+            'click->#show' : 'showClick'
         },
 
         load : function() {
             this.user = new UserEntity();
             this.user.setupBind(3, this);
 
-            this.user.name = '张三';
+            this.user._inner.name = '张三';
         },
 
         mtovClick : function() {
-            this.user.name = '李四';
+            this.user._inner.name = '李四';
             this.user._currStatus = this.user.bindStatus.STATUS_OPEN_MTOV;
         },
 
         vtomClick : function() {
             this.user._currStatus = this.user.bindStatus.STATUS_OPEN_VTOM;
-            this.user.name = '王五';
+            this.user._inner.name = '王五';
+        },
+
+        showClick : function() {
+            console.log(this.user.name);
         }
 
     });
