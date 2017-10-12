@@ -157,22 +157,29 @@
             return (function() {
                 return func.apply(self, arguments);
             });
-        }
+        };
         klass.fn.proxy = klass.proxy;
 
         klass.fn._class = klass;
 
-        Object.defineProperty(klass, '_merge', {enumerable : false});
-        Object.defineProperty(klass, '_super', {enumerable : false});
-        Object.defineProperty(klass, 'extend', {enumerable : false});
-        Object.defineProperty(klass, 'include', {enumerable : false});
-        Object.defineProperty(klass, 'proxy', {enumerable : false});
-        Object.defineProperty(klass, 'fn', {enumerable : false});
-        Object.defineProperty(klass.prototype, '_class', {enumerable : false});
-        Object.defineProperty(klass.prototype, '_super', {enumerable : false});
-        Object.defineProperty(klass.prototype, 'init', {enumerable : false});
-        Object.defineProperty(klass.prototype, 'super', {enumerable : false});
-        Object.defineProperty(klass.prototype, 'proxy', {enumerable : false});
+        klass.defineAttrEnumerable = function(obj, attr, isEnumerable) {
+            Object.defineProperty(obj, attr, {enumerable : isEnumerable});
+        };
+        klass.fn.defineAttrEnumerable = klass.defineAttrEnumerable;
+
+        klass.defineAttrEnumerable(klass, '_merge', false);
+        klass.defineAttrEnumerable(klass, '_super', false);
+        klass.defineAttrEnumerable(klass, 'extend', false);
+        klass.defineAttrEnumerable(klass, 'include', false);
+        klass.defineAttrEnumerable(klass, 'proxy', false);
+        klass.defineAttrEnumerable(klass, 'fn', false);
+        klass.defineAttrEnumerable(klass, 'defineAttrEnumerable', false);
+        klass.defineAttrEnumerable(klass.prototype, '_class', false);
+        klass.defineAttrEnumerable(klass.prototype, '_super', false);
+        klass.defineAttrEnumerable(klass.prototype, 'init', false);
+        klass.defineAttrEnumerable(klass.prototype, 'super', false);
+        klass.defineAttrEnumerable(klass.prototype, 'proxy', false);
+        klass.defineAttrEnumerable(klass.prototype, 'defineAttrEnumerable', false);
 
         return klass;
     };
