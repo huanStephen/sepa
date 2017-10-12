@@ -465,6 +465,14 @@
         console.log(val.id + ',' + val.password + ',' + val.salt);
     });
 
+    var pwd = new Pwd({id : 3, password : '555666', salt : 'cc'});
+
+    pwd.saveCookie('pwd', 1);
+
+    console.log(pwd.loadCookie('pwd'));
+
+    pwd.removeCookie('pwd');
+
 })();
 
 (function() {

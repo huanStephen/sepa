@@ -5,7 +5,7 @@
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-1-12
- * Update:  2017-9-24
+ * Update:  2017-10-12
  */
 (function($) {
 
@@ -494,6 +494,49 @@
          */
         removeSession : function(name) {
             sessionStorage.removeItem(name);
+        },
+        /**
+         * 保存cookie
+         * @param name  保存名称
+         * @param expiresHour   有效期小时
+         */
+        saveCookie : function(name, expiresHour) {
+            var largeExpDate = new Date();
+            if (null != expiresHour) {
+                largeExpDate.setTime(largeExpDate.getTime() + (expiresHour * 1000 * 3600));
+            }
+            document.cookie = name + '=' + escape (this.toJSON())
+                + (expiresHour && '; expires=' + largeExpDate.toGMTString());
+        },
+        /**
+         * 加载cookie
+         * @param name  保存名称
+         * @returns {string}
+         */
+        loadCookie : function(name) {
+            var search = name + '=';
+            if (0 < document.cookie.length) {
+                var offset = document.cookie.indexOf(search);
+                if (-1 != offset) {
+                    offset += search.length;
+                    var end = document.cookie.indexOf(';', offset);
+                    if (-1 == end) {
+                        end = document.cookie.length;
+                    }
+                    return unescape(document.cookie.substring(offset, end));
+                } else {
+                    return null;
+                }
+            }
+        },
+        /**
+         * 删除cookie
+         * @param name  保存名称
+         */
+        removeCookie : function(name) {
+            var expdate = new Date();
+            expdate.setTime(expdate.getTime() - (1000 * 3600));
+            this.saveCookie(name, '', expdate);
         },
         /**
          * 获取属性值
