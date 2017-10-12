@@ -751,71 +751,22 @@
     var sepa = org.eocencle.sepa;
 
     var User = new sepa.Class(sepa.BaseModel);
-    User.create(['id', 'name', 'age', 'sex', 'hobby']);
+    User.create(['id', 'name', 'pwd', 'age', 'sex', 'hobby', 'description']);
 
     var UserEntity = new sepa.Class([User, sepa.Model]);
-
-    UserEntity.include({
-        _triggerEvents : {
-            text : 'input propertychange',
-            password : 'input propertychange',
-            radio : 'change',
-            checkbox : 'change',
-            select : 'change',
-            textarea : 'blur'
-        },
-
-        bindStatus : {
-            STATUS_COLSE : 0,
-            STATUS_OPEN_VTOM : 1,
-            STATUS_OPEN_MTOV : 2
-        },
-
-        _currStatus : 0,
-        _context : null,
-        _inner : null,
-
-        setupBind : function(status, context) {
-            this._currStatus = status;
-            this._context = context;
-            this._inner = {};
-            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
-                var $el = this._context[val];
-                if ($el && 0 != $el.length) {
-                    var tagName = $el[0].tagName;
-                    var event = null;
-                    if ('INPUT' == tagName) {
-                        event = this._triggerEvents[$el.attr('type')];
-                    } else {
-                        event = this._triggerEvents[tagName.toLowerCase()];
-                    }
-                    if (event) {
-                        this._inner[val] = this[val] ? this[val] : null;
-                        this._inner.__defineSetter__(val, this.proxy(function(newVal) {
-                            if (this._currStatus & this.bindStatus.STATUS_OPEN_MTOV) {
-                                $el.val(newVal);
-                            }
-                            this[val] = newVal;
-                        }));
-
-                        $el.on(event, this.proxy(function(event) {
-                            if (this._currStatus & this.bindStatus.STATUS_OPEN_VTOM) {
-                                this._inner[val] = $(event.target).val();
-                                console.log(this[val]);
-                            }
-                        }));
-                    }
-                }
-            }));
-        }
-    });
 
     var Ctrl = new sepa.Class([sepa.Controller]);
 
     Ctrl.include({
 
         elements : {
-            '#name' : 'name'
+            '#id' : 'id',
+            '#name' : 'name',
+            '#pwd' : 'pwd',
+            '#age' : 'age',
+            'input[type="radio"][name="sex"]' : 'sex',
+            'input[type="checkbox"][name="hobby"]' : 'hobby',
+            '#description' : 'description'
         },
 
         events : {
@@ -826,25 +777,36 @@
 
         load : function() {
             this.user = new UserEntity();
-            this.user.setupBind(3, this);
+            this.user.setupBind(this.user.bindStatus.STATUS_OPEN_MTOV | this.user.bindStatus.STATUS_OPEN_VTOM, this);
+            this.user.triggerAfterFilter = this.proxy(this.triggerAfterFilter);
+            this.user.set('name', '张三');
+        },
 
-            this.user._inner.name = '张三';
+        triggerAfterFilter : function(value) {
+            console.log(value);
         },
 
         mtovClick : function() {
-            this.user._inner.name = '李四';
-            this.user._currStatus = this.user.bindStatus.STATUS_OPEN_MTOV;
+            this.user.set('id', '123');
+            this.user.set('name', '李四');
+            this.user.set('pwd', '1');
+            this.user.set('age', '22');
+            this.user.set('age', '23');
+            this.user.set('sex', 'female');
+            this.user.set('hobby', '2,4');
+            this.user.set('description', '简单的描述');
+            this.user.setBindStatus(this.user.bindStatus.STATUS_OPEN_MTOV);
+
         },
 
         vtomClick : function() {
-            this.user._currStatus = this.user.bindStatus.STATUS_OPEN_VTOM;
-            this.user._inner.name = '王五';
+            this.user.setBindStatus(this.user.bindStatus.STATUS_OPEN_VTOM);
+            this.user.set('name', '王五');
         },
 
         showClick : function() {
-            console.log(this.user.name);
+            console.log(this.user);
         }
-
     });
 
     new Ctrl('div.mvvm');

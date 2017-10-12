@@ -347,7 +347,7 @@
     var _Model = org.eocencle.sepa.Model = new _Class;
 
     _Model.include({
-        //是否新数据
+        // 是否新数据
         _newRecord : true,
         /**
          * 初始化数据模型
@@ -502,7 +502,168 @@
          * @param value 值
          */
         set : function(attr, value) {
-            this[attr] = value;
+            if (this._currStatus) {
+                this._inner[attr] = value;
+            } else {
+                this[attr] = value;
+            }
+        },
+        // 控件对应的默认触发事件
+        _triggerEvents : {
+            text : 'input propertychange',
+            password : 'input propertychange',
+            radio : 'change',
+            checkbox : 'change',
+            select : 'change',
+            textarea : 'blur'
+        },
+        // 绑定事件状态
+        bindStatus : {
+            STATUS_COLSE : 0,
+            STATUS_OPEN_VTOM : 1,
+            STATUS_OPEN_MTOV : 2
+        },
+        // 当前绑定状态
+        _currStatus : 0,
+        // 控件上下文环境
+        _context : null,
+        // 内置对象
+        _inner : null,
+        /**
+         * 开启数据绑定
+         * @param status    状态
+         * @param context   控件上下文环境
+         */
+        setupBind : function(status, context) {
+            this._currStatus = status;
+            this._context = context;
+            this._inner = {};
+            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
+                var $el = this._context[val];
+                if ($el && 0 != $el.length) {
+                    var tagName = $el[0].tagName;
+                    var event = null;
+                    if ('INPUT' == tagName) {
+                        tagName = $el.attr('type').toLowerCase();
+                    } else {
+                        tagName = tagName.toLowerCase();
+                    }
+                    event = this._triggerEvents[tagName];
+                    if (event) {
+                        this._inner[val] = this[val] ? this[val] : null;
+                        this._inner.__defineSetter__(val, this.proxy(function(newVal) {
+                            if (this._currStatus & this.bindStatus.STATUS_OPEN_MTOV) {
+                                if ('text' == tagName || 'password' == tagName || 'textarea' == tagName) {
+                                    this.renderBeforeFilter && this.renderBeforeFilter(tagName, newVal);
+                                    $el.val(newVal);
+                                }
+                                if ('radio' == tagName) {
+                                    this.renderBeforeFilter && this.renderBeforeFilter(tagName, newVal);
+                                    $el.each(function() {
+                                        if (newVal == $(this).val()) {
+                                            this.checked = true;
+                                            $(this).attr('checked', 'checked');
+                                        } else {
+                                            this.checked = false;
+                                            $(this).removeAttr('checked');
+                                        }
+                                    });
+                                }
+                                if ('checkbox' == tagName) {
+                                    this.renderBeforeFilter && this.renderBeforeFilter(tagName, newVal);
+                                    var chk = {};
+                                    newVal.split(',').forEach(function(val, idx, arr) {
+                                        chk[val] = true;
+                                    });
+                                    $el.each(function() {
+                                        if (chk[$(this).val()]) {
+                                            this.checked = true;
+                                            $(this).attr('checked', 'checked');
+                                        } else {
+                                            this.checked = false;
+                                            $(this).removeAttr('checked');
+                                        }
+                                    });
+                                }
+                                if ('select' == tagName) {
+                                    this.renderBeforeFilter && this.renderBeforeFilter(tagName, newVal);
+                                    var $options = $el.find('option');
+                                    $options.each(function() {
+                                        if (newVal == $(this).val()) {
+                                            $(this).attr('selected', 'selected');
+                                        } else {
+                                            $(this).removeAttr('selected');
+                                        }
+                                    });
+                                }
+                            }
+                            this.setDataBeforeFilter && this.setDataBeforeFilter(newVal);
+                            this[val] = newVal;
+                            this.setDataAfterFilter && this.setDataAfterFilter(newVal);
+                        }));
+
+                        $el.on(event, this.proxy(function(event) {
+                            if (this._currStatus & this.bindStatus.STATUS_OPEN_VTOM) {
+                                var v = null;
+                                if ('text' == tagName || 'password' == tagName || 'textarea' == tagName ||
+                                    'radio' == tagName || 'select' == tagName) {
+                                    v = $(event.target).val();
+                                }
+                                if ('checkbox' == tagName) {
+                                    v = '';
+                                    $('input[type="checkbox"][name="' + $(event.target).attr('name') + '"]',
+                                        this._context._el).each(function() {
+                                            if (this.checked) {
+                                                v += $(this).val() + ',';
+                                            }
+                                        });
+                                    if (v) {
+                                        v = v.substring(0, v.length - 1);
+                                    }
+                                }
+                                this.triggerBeforeFilter && this.triggerBeforeFilter(v);
+                                this._inner[val] = v;
+                                this.triggerAfterFilter && this.triggerAfterFilter(v);
+                            }
+                        }));
+                    }
+                }
+            }));
+        },
+        /**
+         * 获取数据绑定状态
+         */
+        getBindStatus : function() {
+            return this._currStatus;
+        },
+        /**
+         * 设置数据绑定状态
+         * @param status    状态
+         */
+        setBindStatus : function(status) {
+            this._currStatus = status;
+        },
+        /**
+         * 获取数据绑定上下文环境
+         */
+        getBindContext : function() {
+            return this._context;
+        },
+        /**
+         * 获取触发事件
+         * @param ctrlName  控件名称
+         * @returns {*}
+         */
+        getTriggerEvent : function(ctrlName) {
+            return this._triggerEvents[ctrlName];
+        },
+        /**
+         * 设置触发事件
+         * @param ctrlName  控件名称
+         * @param event 触发事件
+         */
+        setTriggerEvent : function(ctrlName, event) {
+            this._triggerEvents[ctrlName] = event;
         }
     });
 
@@ -515,7 +676,7 @@
     var _Controller = org.eocencle.sepa.Controller = new _Class;
 
     _Controller.extend({
-        //扩展组件
+        // 扩展组件
         _component : {}
     });
 
@@ -709,7 +870,8 @@
                         ul : '<ul></ul>',
                         ol : '<ol></ol>',
                         li : '<li></li>',
-                        label : '<label></label>'
+                        label : '<label></label>',
+                        cite : '<cite></cite>'
                     };
 
                     if (elName && $.trim(elName)) {
