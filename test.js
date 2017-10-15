@@ -510,11 +510,11 @@
         },
 
         load : function() {
-            this.component('remote', ['test', function(config) {
+            this.comp('remote', ['test', function(config) {
                 console.log(this.config.test.params.name);
                 config.params.name += 'OK';
             }]);
-            this.ajaxFunc = this.component('bind', ['name', '/user/name']);
+            this.ajaxFunc = this.comp('bind', ['name', '/user/name']);
 
             this.setup(['status1', 'status2', 'status3']);
             this.status1(function() {
@@ -529,11 +529,11 @@
         },
 
         requiredClick : function() {
-            var result = this.component('vaildate', ['email', '亲,请输入合法的邮箱!', this.$email.val()]);
+            var result = this.comp('vaildate', ['email', '亲,请输入合法的邮箱!', this.$email.val()]);
             if(result) {
                 this.$errMsg.text(result);
             } else {
-                this.$errMsg.empty().append(this.component('element', ['strong']).text('验证成功!'));
+                this.$errMsg.empty().append(this.comp('element', ['strong']).text('验证成功!'));
             }
         },
 
@@ -542,7 +542,7 @@
         },
 
         ajaxClick : function() {
-            this.$ajaxErrMsg.text(this.component('vaildate', ['remote', null, 'name']));
+            this.$ajaxErrMsg.text(this.comp('vaildate', ['remote', null, 'name']));
         },
 
         testResult : function(data) {
@@ -629,35 +629,35 @@
             }
         },
         prevBtnBlk : function() {
-            var li = this.component('element', ['li']).addClass('prev').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
-            var a = this.component('element', ['a']).attr('href', 'javascript:void(0);').append('&lt;');
+            var li = this.comp('element', ['li']).addClass('prev').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+            var a = this.comp('element', ['a']).attr('href', 'javascript:void(0);').append('&lt;');
             li.append(a);
             return li;
         },
 
         nextBtnBlk : function() {
-            var li = this.component('element', ['li']).addClass('next').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
-            var a = this.component('element', ['a']).attr('href', 'javascript:void(0);').append('&gt;');
+            var li = this.comp('element', ['li']).addClass('next').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+            var a = this.comp('element', ['a']).attr('href', 'javascript:void(0);').append('&gt;');
             li.append(a);
             return li;
         },
 
         actBtnBlk : function() {
-            var li = this.component('element', ['li']).css({'float':'left', 'list-style-type':'none', 'width':'30px'});
-            var a = this.component('element', ['a']).attr('href', 'javascript:void(0);').addClass('current').css('color','red');
+            var li = this.comp('element', ['li']).css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+            var a = this.comp('element', ['a']).attr('href', 'javascript:void(0);').addClass('current').css('color','red');
             li.append(a);
             return li;
         },
 
         pageBtnBlk : function() {
-            var li = this.component('element', ['li']).addClass('num').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
-            var a = this.component('element', ['a']).attr('href', 'javascript:void(0);');
+            var li = this.comp('element', ['li']).addClass('num').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+            var a = this.comp('element', ['a']).attr('href', 'javascript:void(0);');
             li.append(a);
             return li;
         },
 
         moitBtnBlk : function() {
-            return this.component('element', ['li']).text(' ... ').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
+            return this.comp('element', ['li']).text(' ... ').css({'float':'left', 'list-style-type':'none', 'width':'30px'});
         }
     });
 
@@ -670,13 +670,13 @@
         totalPage : 49,
 
         load : function() {
-            this.component('openPage', ['page']);
+            this.comp('openPage', ['page']);
             this.show(1);
         },
 
         show : function(currPage) {
             this.currPage = currPage;
-            this.component('paginate', [currPage, this.totalPage]);
+            this.comp('paginate', [currPage, this.totalPage]);
         },
 
         pervClick : function() {
@@ -711,16 +711,16 @@
         },
 
         load : function() {
-            this.component('domRenderRole', [false, this.test1, '张三']);
-            this.component('domRenderRole', [false, this.test1, 'color:red;', 'style']);
-            console.log(this.component('domRenderRole', [true, this.test1, '', 'class']));
+            this.comp('domRenderRole', [false, this.test1, '张三']);
+            this.comp('domRenderRole', [false, this.test1, 'color:red;', 'style']);
+            console.log(this.comp('domRenderRole', [true, this.test1, '', 'class']));
 
-            this.component('domRenderRole', [false, this.radio, '2']);
-            console.log('cls:' + this.component('domRenderRole', [true, this.radio]));
-            this.component('domRenderRole', [false, this.checkbox, '2']);
-            console.log('like:' + this.component('domRenderRole', [true, this.checkbox]));
-            this.component('domRenderRole', [false, this.checkbox, '1,3']);
-            console.log('like:' + this.component('domRenderRole', [true, this.checkbox]));
+            this.comp('domRenderRole', [false, this.radio, '2']);
+            console.log('cls:' + this.comp('domRenderRole', [true, this.radio]));
+            this.comp('domRenderRole', [false, this.checkbox, '2']);
+            console.log('like:' + this.comp('domRenderRole', [true, this.checkbox]));
+            this.comp('domRenderRole', [false, this.checkbox, '1,3']);
+            console.log('like:' + this.comp('domRenderRole', [true, this.checkbox]));
         }
 
     });

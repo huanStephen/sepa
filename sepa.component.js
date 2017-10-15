@@ -120,7 +120,7 @@
                             continue;
                         }
 
-                        var val = this.component('domRenderRole', [true, this[name]]);
+                        var val = this.comp('domRenderRole', [true, this[name]]);
 
                         if (vailds[name]) {
                             var vs = $.extend(true, {}, vailds[name]);
@@ -129,7 +129,7 @@
                                 if(msg) break;
 
                                 vs[idx].push(val);
-                                var errMsg = this.component('vaildate', vs[idx]);
+                                var errMsg = this.comp('vaildate', vs[idx]);
                                 msg += errMsg;
                                 errMsgFun.call(this[name], errMsg);
                             }

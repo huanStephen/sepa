@@ -792,7 +792,7 @@
             }
         },
 
-        component : function(func, paramArray, packet) {
+        comp : function(func, paramArray, packet) {
             if(!packet || !$.trim(packet)) packet = '_common';
 
             try {
@@ -970,8 +970,8 @@
                     var errMsg = arguments[1];
                     var params = Array.prototype.slice.call(arguments,2);
                     if (rule && defMsg[rule]) {
-                        if (rule === 'remote' ? this.component('chkRemote', params)
-                                : this.component(rule, params)) {
+                        if (rule === 'remote' ? this.comp('chkRemote', params)
+                                : this.comp(rule, params)) {
                             return '';
                         } else {
                             if (!errMsg || !$.trim(errMsg)) {
@@ -1013,7 +1013,7 @@
                             throw ReferenceError('Configuration of #' + cfgName + ' is not found!');
                         }
 
-                        this.component('remote', [cfgName, function(config) {
+                        this.comp('remote', [cfgName, function(config) {
                             config.check = 0;
                             config.params[name] = $el.val();
                         }]);
