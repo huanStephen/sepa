@@ -1,42 +1,15 @@
 /**
  * Sepa
  *
- * Version: 2.1.0
+ * Version: 3.0.0
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-1-12
- * Update:  2017-4-22
+ * Update:  2017-10-12
  */
 (function($) {
 
     this.org = {eocencle : {sepa : {}}};
-
-    /**
-     * The depth of the merger object
-     * 深度合并对象
-     * @param obj1  对象1
-     * @param obj2  对象2
-     */
-    Object.merge = function(obj1, obj2) {
-
-        if(!(obj1 instanceof Object)) throw('Obj1 is not an object!');
-        if(!(obj2 instanceof Object)) throw('Obj2 is not an object!');
-
-        var result = Object.assign(obj1 instanceof Function ? new _Class() : {}, obj1);
-        for(var i in obj2) {
-            if(obj2[i] instanceof Object) {
-                if(!obj1[i] || !(obj1 instanceof Object)) {
-                    result[i] = obj2[i];
-                } else {
-                    result[i] = Object.merge(obj1[i], obj2[i]);
-                }
-            } else {
-                result[i] = obj2[i];
-            }
-        }
-
-        return result;
-    };
 
     /**
      * Guid generator
@@ -59,90 +32,224 @@
      */
     var _Class = org.eocencle.sepa.Class = function(parent) {
 
-        var klass = function () {
-            for(var i in this._initqueue)
-                this._initqueue[i].apply(this, arguments);
+        var klass = function() {
+            var inits = new Array;
+            var args = arguments;
+            var curr = this;
+            do {
+                inits.push(curr.init);
+            } while(curr = curr._super);
 
-            this.init && this.init.apply(this, arguments);
+            inits.reverse();
+            inits.forEach(this.proxy(function(val, idx, arr) {
+                val.apply(this, args);
+            }));
         };
 
-        if(parent) {
-            var subclass = function(){};
-            var initqueue = new Array();
+        klass.prototype.init = function() {};
 
-            if (parent instanceof Array) {
-                var fn = {};
-
-                for (var i in parent) {
-                    klass = Object.merge(klass, parent[i]);
-
-                    if(parent[i].fn._initqueue)
-                        initqueue = initqueue.concat(parent[i].fn._initqueue);
-                    if(parent[i].fn.init)
-                        initqueue.push(parent[i].fn.init);
-
-                    fn = Object.merge(fn, parent[i].fn);
+        klass.prototype.super = function(func, args) {
+            if (this._super) {
+                if (this._super[func]) {
+                    return this._super[func].apply(this, args);
+                } else {
+                    return this._super.super(func, args);
                 }
-                fn._initqueue = initqueue;
-
-                subclass.prototype = fn;
             } else {
-                klass = Object.merge(klass, parent);
+                throw ReferenceError('Function of ' + func + ' is not found!');
+            }
+        };
 
-                if(parent.prototype._initqueue)
-                    initqueue.concat(parent.prototype._initqueue);
-                if(parent.prototype.init)
-                    initqueue.push(parent.prototype.init);
-
-                subclass.prototype = Object.merge(subclass.prototype, parent.prototype);
-
-                subclass.prototype._initqueue = initqueue;
+        klass._merge = function(obj1, obj2) {
+            if (!obj1) {
+                return obj2;
             }
 
-            klass.prototype = new subclass;
+            if (typeof obj1 != typeof obj2) {
+                throw TypeError('Merge object types are inconsistent!\n#obj1=' + typeof obj1 + ',#obj2=' +
+                    typeof obj2);
+            }
 
-            klass.prototype._static = klass;
+            if (obj2 instanceof Function || obj2 instanceof Array) {
+                return obj2;
+            }
+
+            if (obj2 instanceof Object) {
+                var result = Object.assign({}, obj1);
+                for (var i in obj2) {
+                    if (obj2[i] instanceof Object) {
+                        result[i] = klass._merge(obj1[i], obj2[i]);
+                    } else {
+                        result[i] = obj2[i];
+                    }
+                }
+                return result;
+            }
+            return obj2;
+        };
+
+        if (parent) {
+            if (parent instanceof Array) {
+                var classes = new Array;
+                var sup = null;
+                parent.forEach(function(val, idx, arr) {
+                    var cls = new Array;
+                    sup = val;
+                    do {
+                        cls.push(sup.fn._class);
+                    } while (sup = sup._super);
+                    cls.reverse();
+                    classes = classes.concat(cls);
+                });
+
+                var first = true;
+                classes.forEach(function(val, idx, arr) {
+                    if (first) {
+                        sup = new _Class(val);
+                        first = false;
+                    } else {
+                        sup.extend(val);
+                        sup.include({
+                            init : val.prototype.init
+                        });
+                        sup.include(val.prototype);
+                        sup = new _Class(sup);
+                    }
+                });
+
+                parent = sup;
+            }
+
+            for (var i in parent) {
+                klass[i] = klass._merge(klass[i], parent[i]);
+            }
+            for (var i in parent.prototype) {
+                klass.prototype[i] = klass._merge(klass.prototype[i], parent.prototype[i]);
+            }
+            klass._super = parent;
+            klass.prototype._super = parent.prototype;
         }
-
-        klass.prototype.init = function() {};
 
         klass.fn = klass.prototype;
 
         klass.extend = function(obj) {
             var extended = obj.extended;
-            for(var i in obj) {
-                if(obj[i] instanceof Object && !(obj[i] instanceof Array) && !(obj[i] instanceof Function)) {
-                    klass[i] = klass[i] ? Object.merge(klass[i], obj[i]) : obj[i];
-                } else {
-                    klass[i] = obj[i];
-                }
+            for(var i in obj){
+                klass[i] = klass._merge(klass[i], obj[i]);
             }
-            extended && extended(klass);
+            if (extended) {
+                extended(klass);
+            }
         };
 
         klass.include = function(obj) {
             var included = obj.included;
-            for(var i in obj) {
-                if(obj[i] instanceof Object && !(obj[i] instanceof Array) && !(obj[i] instanceof Function)) {
-                    klass.fn[i] = klass.fn[i] ? Object.merge(klass.fn[i], obj[i]) : obj[i];
-                } else {
-                    klass.fn[i] = obj[i];
-                }
+            for(var i in obj){
+                klass.fn[i] = klass._merge(klass.fn[i], obj[i]);
             }
-            included && included(klass);
+            if (included) {
+                included(klass);
+            }
         };
 
         klass.proxy = function(func) {
             var self = this;
             return (function() {
-                return func.apply(self,arguments);
+                return func.apply(self, arguments);
             });
         };
+        klass.fn.proxy = klass.proxy;
 
-        klass.prototype.proxy = klass.proxy;
+        klass.fn._class = klass;
+
+        klass.defineAttrEnumerable = function(obj, attr, isEnumerable) {
+            Object.defineProperty(obj, attr, {enumerable : isEnumerable});
+        };
+        klass.fn.defineAttrEnumerable = klass.defineAttrEnumerable;
+
+        klass.defineAttrEnumerable(klass, '_merge', false);
+        klass.defineAttrEnumerable(klass, '_super', false);
+        klass.defineAttrEnumerable(klass, 'extend', false);
+        klass.defineAttrEnumerable(klass, 'include', false);
+        klass.defineAttrEnumerable(klass, 'proxy', false);
+        klass.defineAttrEnumerable(klass, 'fn', false);
+        klass.defineAttrEnumerable(klass, 'defineAttrEnumerable', false);
+        klass.defineAttrEnumerable(klass.prototype, '_class', false);
+        klass.defineAttrEnumerable(klass.prototype, '_super', false);
+        klass.defineAttrEnumerable(klass.prototype, 'init', false);
+        klass.defineAttrEnumerable(klass.prototype, 'super', false);
+        klass.defineAttrEnumerable(klass.prototype, 'proxy', false);
+        klass.defineAttrEnumerable(klass.prototype, 'defineAttrEnumerable', false);
 
         return klass;
     };
+
+    /**
+    * Finite state machine
+    * 有限状态机
+    * @type {Function}
+    * @private
+    */
+    var _StateMachine = org.eocencle.sepa.StateMachine = new _Class;
+
+    _StateMachine.include({
+
+        on : function(name, callback) {
+            if (!name || !callback) {
+                return;
+            }
+            if (!this._handlers) {
+                this._handlers = {};
+            }
+            if (!this._handlers[name]) {
+                this._handlers[name] = [];
+            }
+            this._handlers[name].push(callback);
+        },
+
+        trigger : function(name) {
+            if (!this._handlers) {
+                return;
+            }
+
+            var args = $.makeArray(arguments);
+            var name = args.shift();
+
+            var callbacks = this._handlers[name];
+            if (!callbacks) {
+                return;
+            }
+
+            callbacks.forEach(this.proxy(function(val, idx, arr) {
+                val.apply(this, args);
+            }));
+        },
+
+        delEvent : function(name) {
+            if (this._handlers[name]) {
+                delete this._handlers[name];
+            }
+        },
+
+        setup : function(nameArr) {
+            if (nameArr instanceof Array) {
+                nameArr.forEach(this.proxy(function(val, idx, arr) {
+                    this[val] = function() {
+                        var args = $.makeArray(arguments);
+                        if ('function' == typeof args[0]) {
+                            args.unshift(val);
+                            this.on.apply(this, args);
+                        } else if ('delete' == args[0]) {
+                            this.delEvent.call(this, val);
+                        } else {
+                            args.unshift(val);
+                            this.trigger.apply(this, args);
+                        }
+                    }
+                }));
+            }
+        }
+    });
 
     /**
      * Data model
@@ -150,15 +257,13 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _BaseModel = org.eocencle.sepa.BaseModel = new _Class();
+    var _BaseModel = org.eocencle.sepa.BaseModel = new _Class;
 
     _BaseModel.extend({
         //属性字段
         _attributes : [],
         //保存资源对象
         _records : {},
-        //资源个数
-        _count : 0,
         //排序
         _sort : [],
 
@@ -168,15 +273,17 @@
          */
         create : function(attrArray) {
             var chkId = false;
-            for(var i in attrArray) {
-                if(attrArray[i] === 'id') {
+            attrArray.forEach(function(val, idx, arr) {
+                if(val === 'id') {
                     chkId = true;
-                    break;
                 }
-            }
+            });
 
-            if(chkId) this._attributes = attrArray;
-            else throw('Required id!');
+            if (chkId) {
+                this._attributes = attrArray;
+            } else {
+                throw('Required id!');
+            }
         },
         /**
          * 查找记录
@@ -184,7 +291,9 @@
          */
         find : function(id) {
             var result = this._records[id];
-            if(!result) throw('Unkown record!');
+            if (!result) {
+                throw('Unkown record!');
+            }
             return result;
         },
         /**
@@ -192,7 +301,6 @@
          */
         clear : function() {
             this._records = {};
-            this._count = 0;
             this._sort.splice(0, this._sort.length);
         },
         /**
@@ -203,7 +311,7 @@
             this.clear();
 
             var recode;
-            for(var i = 0, il = array.length; i < il; i++) {
+            for (var i = 0, il = array.length; i < il; i++) {
                 recode = new this(array[i]);
                 recode.save();
             }
@@ -213,16 +321,27 @@
          * @returns {number}    数据个数
          */
         count : function() {
-            return this._count;
+            return this.all().length;
         },
         /**
          * 获取全部数据
          * @returns {_records|{}}   全部数据
          */
         all : function() {
-            var result = new Array();
-            for(var i in this._sort) result.push(this._records[this._sort[i]]);
+            var result = new Array;
+            this._sort.forEach(this.proxy(function(val, idx, arr) {
+                result.push(this._records[val]);
+            }));
             return result;
+        },
+        /**
+         *  遍历数据
+         * @param callback  回调函数
+         */
+        each : function(callback) {
+            for (var i in this._sort) {
+                callback.call(this, this._records[this._sort[i]], this._sort[i], this._records);
+            }
         }
     });
 
@@ -232,16 +351,19 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _Model = org.eocencle.sepa.Model = new _Class();
+    var _Model = org.eocencle.sepa.Model = new _Class;
 
     _Model.include({
-        //是否新数据
+        // 是否新数据
         _newRecord : true,
         /**
          * 初始化数据模型
          * @param attributes    数据
          */
         init : function(attributes) {
+            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
+                this[val] = null;
+            }));
             attributes && this.load(attributes);
         },
         /**
@@ -257,15 +379,14 @@
          */
         create : function() {
             this._newRecord = false;
-            this._static._records[this.id] = this.dup();
-            this._static._count ++;
-            this._static._sort.push(this.id);
+            this._class._records[this.id] = this.dup();
+            this._class._sort.push(this.id);
         },
         /**
          * 更新记录
          */
         update : function() {
-            this._static._records[this.id] = this.dup();
+            this._class._records[this.id] = this.dup();
         },
         /**
          * 保存记录
@@ -277,12 +398,11 @@
          * 销毁记录
          */
         destroy : function() {
-            delete this._static._records[this.id];
-            this._static._count --;
-            var sort = this._static._sort;
-            for(var i=0; i < sort.length; i++) {
+            delete this._class._records[this.id];
+            var sort = this._class._sort;
+            for (var i = 0; i < sort.length; i++) {
                 if(sort[i] == this.id) {
-                    this._static._sort.splice(i, 1);
+                    this._class._sort.splice(i, 1);
                     break;
                 }
             }
@@ -293,10 +413,9 @@
          */
         attributes : function() {
             var result = {};
-            for(var i in this._static._attributes) {
-                var attr = this._static._attributes[i];
-                result[attr] = this[attr];
-            }
+            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
+                result[val] = this[val];
+            }));
             result.id = this.id;
             return result;
         },
@@ -306,9 +425,9 @@
          */
         toJSON : function() {
             var obj = {};
-            var attr = this._static._attributes;
-            for(var i in attr)
-                obj[attr[i]] = this[attr[i]];
+            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
+                obj[val] = this[val];
+            }));
             return JSON.stringify(obj);
         },
         /**
@@ -317,13 +436,22 @@
          * @param callback	回调函数
          */
         createRemote : function(url, callback) {
-            $.post(url, this.attributes(), callback);
+            // 防止400错误
+            var params = this.attributes();
+            for (var i in params) {
+                if (!params[i]) {
+                    delete params[i];
+                }
+            }
+            $.post(url, params, callback);
         },
         /**
          * 创建副本
          */
         dup : function() {
-            return $.extend(true, {}, this);
+            var result = new this._class(this);
+            result._newRecord = this._newRecord;
+            return result;
         },
         /**
          * 保存到本地
@@ -366,6 +494,226 @@
          */
         removeSession : function(name) {
             sessionStorage.removeItem(name);
+        },
+        /**
+         * 保存cookie
+         * @param name  保存名称
+         * @param expiresHour   有效期小时
+         */
+        saveCookie : function(name, expiresHour) {
+            var largeExpDate = new Date();
+            if (null != expiresHour) {
+                largeExpDate.setTime(largeExpDate.getTime() + (expiresHour * 1000 * 3600));
+            }
+            document.cookie = name + '=' + escape (this.toJSON())
+                + (expiresHour && '; expires=' + largeExpDate.toGMTString());
+        },
+        /**
+         * 加载cookie
+         * @param name  保存名称
+         * @returns {string}
+         */
+        loadCookie : function(name) {
+            var search = name + '=';
+            if (0 < document.cookie.length) {
+                var offset = document.cookie.indexOf(search);
+                if (-1 != offset) {
+                    offset += search.length;
+                    var end = document.cookie.indexOf(';', offset);
+                    if (-1 == end) {
+                        end = document.cookie.length;
+                    }
+                    return unescape(document.cookie.substring(offset, end));
+                } else {
+                    return null;
+                }
+            }
+        },
+        /**
+         * 删除cookie
+         * @param name  保存名称
+         */
+        removeCookie : function(name) {
+            var expdate = new Date();
+            expdate.setTime(expdate.getTime() - (1000 * 3600));
+            this.saveCookie(name, '', expdate);
+        },
+        /**
+         * 获取属性值
+         * @param attr  属性名称
+         * @returns {*}
+         */
+        get : function(attr) {
+            return this[attr];
+        },
+        /**
+         *  设置属性值
+         * @param attr  属性名称
+         * @param value 值
+         */
+        set : function(attr, value) {
+            if (this._currStatus) {
+                this._inner[attr] = value;
+            } else {
+                this[attr] = value;
+            }
+        },
+        // 控件对应的默认触发事件
+        _triggerEvents : {
+            text : 'input propertychange',
+            password : 'input propertychange',
+            radio : 'change',
+            checkbox : 'change',
+            select : 'change',
+            textarea : 'blur'
+        },
+        // 绑定事件状态
+        bindStatus : {
+            STATUS_COLSE : 0,
+            STATUS_OPEN_VTOM : 1,
+            STATUS_OPEN_MTOV : 2
+        },
+        // 当前绑定状态
+        _currStatus : 0,
+        // 控件上下文环境
+        _context : null,
+        // 内置对象
+        _inner : null,
+        /**
+         * 开启数据绑定
+         * @param status    状态
+         * @param context   控件上下文环境
+         */
+        setupBind : function(status, context) {
+            this._currStatus = status;
+            this._context = context;
+            this._inner = {};
+            this._class._attributes.forEach(this.proxy(function(val, idx, arr) {
+                var $el = this._context[val];
+                if ($el && 0 != $el.length) {
+                    var tagName = $el[0].tagName;
+                    var event = null;
+                    if ('INPUT' == tagName) {
+                        tagName = $el.attr('type').toLowerCase();
+                    } else {
+                        tagName = tagName.toLowerCase();
+                    }
+                    event = this._triggerEvents[tagName];
+                    if (event) {
+                        this._inner[val] = this[val] ? this[val] : null;
+                        this._inner.__defineSetter__(val, this.proxy(function(newVal) {
+                            if (this._currStatus & this.bindStatus.STATUS_OPEN_MTOV) {
+                                if ('text' == tagName || 'password' == tagName || 'textarea' == tagName) {
+                                    this.renderBeforeFilter && this.renderBeforeFilter(tagName, newVal);
+                                    $el.val(newVal);
+                                }
+                                if ('radio' == tagName) {
+                                    this.renderBeforeFilter && this.renderBeforeFilter(tagName, newVal);
+                                    $el.each(function() {
+                                        if (newVal == $(this).val()) {
+                                            this.checked = true;
+                                            $(this).attr('checked', 'checked');
+                                        } else {
+                                            this.checked = false;
+                                            $(this).removeAttr('checked');
+                                        }
+                                    });
+                                }
+                                if ('checkbox' == tagName) {
+                                    this.renderBeforeFilter && this.renderBeforeFilter(tagName, newVal);
+                                    var chk = {};
+                                    newVal.split(',').forEach(function(val, idx, arr) {
+                                        chk[val] = true;
+                                    });
+                                    $el.each(function() {
+                                        if (chk[$(this).val()]) {
+                                            this.checked = true;
+                                            $(this).attr('checked', 'checked');
+                                        } else {
+                                            this.checked = false;
+                                            $(this).removeAttr('checked');
+                                        }
+                                    });
+                                }
+                                if ('select' == tagName) {
+                                    this.renderBeforeFilter && this.renderBeforeFilter(tagName, newVal);
+                                    var $options = $el.find('option');
+                                    $options.each(function() {
+                                        if (newVal == $(this).val()) {
+                                            $(this).attr('selected', 'selected');
+                                        } else {
+                                            $(this).removeAttr('selected');
+                                        }
+                                    });
+                                }
+                            }
+                            this.setDataBeforeFilter && this.setDataBeforeFilter(newVal);
+                            this[val] = newVal;
+                            this.setDataAfterFilter && this.setDataAfterFilter(newVal);
+                        }));
+
+                        $el.on(event, this.proxy(function(event) {
+                            if (this._currStatus & this.bindStatus.STATUS_OPEN_VTOM) {
+                                var v = null;
+                                if ('text' == tagName || 'password' == tagName || 'textarea' == tagName ||
+                                    'radio' == tagName || 'select' == tagName) {
+                                    v = $(event.target).val();
+                                }
+                                if ('checkbox' == tagName) {
+                                    v = '';
+                                    $('input[type="checkbox"][name="' + $(event.target).attr('name') + '"]',
+                                        this._context._el).each(function() {
+                                            if (this.checked) {
+                                                v += $(this).val() + ',';
+                                            }
+                                        });
+                                    if (v) {
+                                        v = v.substring(0, v.length - 1);
+                                    }
+                                }
+                                this.triggerBeforeFilter && this.triggerBeforeFilter(v);
+                                this._inner[val] = v;
+                                this.triggerAfterFilter && this.triggerAfterFilter(v);
+                            }
+                        }));
+                    }
+                }
+            }));
+        },
+        /**
+         * 获取数据绑定状态
+         */
+        getBindStatus : function() {
+            return this._currStatus;
+        },
+        /**
+         * 设置数据绑定状态
+         * @param status    状态
+         */
+        setBindStatus : function(status) {
+            this._currStatus = status;
+        },
+        /**
+         * 获取数据绑定上下文环境
+         */
+        getBindContext : function() {
+            return this._context;
+        },
+        /**
+         * 获取触发事件
+         * @param ctrlName  控件名称
+         * @returns {*}
+         */
+        getTriggerEvent : function(ctrlName) {
+            return this._triggerEvents[ctrlName];
+        },
+        /**
+         * 设置触发事件
+         * @param ctrlName  控件名称
+         * @param event 触发事件
+         */
+        setTriggerEvent : function(ctrlName, event) {
+            this._triggerEvents[ctrlName] = event;
         }
     });
 
@@ -375,119 +723,84 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _Controller = org.eocencle.sepa.Controller = new _Class();
+    var _Controller = org.eocencle.sepa.Controller = new _Class;
 
     _Controller.extend({
-        //扩展组件
+        // 扩展组件
         _component : {}
     });
 
     _Controller.include({
-        //配置
+        // 配置
         config : {},
 
         init : function(element) {
             this._el = $(element);
-            this.refreshElements();
-            this.searchGlobals();
-            this.delegateEvents();
-            this.pickBlocks();
-            this.load && this.load();
+            this._refreshElements();
+            this._searchGlobals();
+            this._delegateEvents();
+            this._pickBlocks();
+            this.load && this.load(this._el);
         },
 
         $ : function(selector) {
             return $(selector, this._el);
         },
-        //根据第一个空格来分隔
-        eventSplitter : /^(\w+)\s*(.*)$/,
+        // 根据->来分隔
+        _eventSplitter : '->',
 
-        delegateEvents: function() {
+        _delegateEvents: function() {
             for(var key in this.events) {
                 var methodName = this.events[key];
-                var method = this.proxy(this[methodName]);
-                var match = key.match(this.eventSplitter);
-                if(match == undefined) throw(this.events[key] + ' Bind error!');
-                var eventName = match[1];
-                var selector = match[2];
-                if(selector === '') {
-                    this._el.bind(eventName, method);
+                var match = key.split(this._eventSplitter);
+                var eventName = null, selector = null;
+                if (2 == match.length) {
+                    eventName = match[0];
+                    selector = match[1];
+                } else if (1 == match.length) {
+                    eventName = match[0];
+                    selector = this._el;
                 } else {
-                    this._el.on(eventName, selector, method);
+                    throw(this.events[key] + ' Bind error!');
+                }
+
+                if (this[methodName]) {
+                    this._el.on(eventName, selector, {method : methodName}, this.proxy(function(event) {
+                        this[event.data.method].call(this, event, this.$(event.target), event.target.tagName);
+                    }));
+                } else {
+                    throw ReferenceError('Function of #' + methodName + ' is not found!');
                 }
             }
         },
 
-        refreshElements : function() {
-            for(var key in this.elements)
+        _refreshElements : function() {
+            for (var key in this.elements) {
                 this[this.elements[key]] = this.$(key);
+            }
         },
 
-        searchGlobals : function() {
-            for(var key in this.globals)
+        _searchGlobals : function() {
+            for (var key in this.globals) {
                 this[this.globals[key]] = $(key);
+            }
         },
 
-        pickBlocks : function() {
-            for(var key in this.blocks)
+        _pickBlocks : function() {
+            for (var key in this.blocks) {
                 this[this.blocks[key]] = this.$(this[key]()).clone();
+            }
         },
 
-        component : function(func, paramArray, packet) {
+        comp : function(func, paramArray, packet) {
             if(!packet || !$.trim(packet)) packet = '_common';
 
             try {
-                return this._static._component[packet][func].apply(this, paramArray);
+                return this._class._component[packet][func].apply(this, paramArray);
             } catch (e) {
                 throw('Component call error! \n' + e);
             }
         }
-    });
-
-    /**
-     * Finite state machine
-     * 有限状态机
-     * @type {Function}
-     * @private
-     */
-    var _StateMachine = org.eocencle.sepa.StateMachine = new _Class();
-
-    _StateMachine.include({
-        events : {},
-
-        init : function(content) {
-            this.content = content;
-        },
-
-        addEvent : function(event) {
-            if(event && event.state && $.trim(event.state)) this.events[event.state] = event;
-        },
-
-        removeEvent : function(state) {
-            delete this.events[state];
-        },
-
-        trigger : function(state) {
-            this.events[state] && this.events[state].event.apply(this.content, arguments);
-        }
-    });
-
-    /**
-     * State machine event
-     * 状态机事件
-     * @type {Function}
-     * @private
-     */
-    var _Event = org.eocencle.sepa.Event = new _Class();
-
-    _Event.include({
-        state : '',
-
-        init : function(state, event) {
-            this.state = state;
-            this.event = event;
-        },
-
-        event : function() {}
     });
 
     /**
@@ -496,12 +809,12 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _CRemote = org.eocencle.sepa.CRemote = new _Class();
+    var _CRemote = org.eocencle.sepa.CRemote = new _Class;
 
     _CRemote.extend({
         _component : {
             _common : {
-                remote : function(cfgName) {
+                remote : function(cfgName, beforeFunc) {
                     var defcfg = {
                         path : '',
                         method : 'get',
@@ -509,36 +822,48 @@
                         callback : ''
                     };
 
-                    if(!$.trim(cfgName)) throw('No configuration!');
+                    if (!$.trim(cfgName)) {
+                        throw('No configuration!');
+                    }
 
                     var cfg = this.config[cfgName];
-                    if(!cfg) throw('No configuration!');
+                    if (!cfg) {
+                        throw ReferenceError('Configuration of #' + cfgName + ' is not found!');
+                    }
 
-                    if(!cfg.path || !$.trim(cfg.path)) throw('Required path!');
-                    if(!cfg.callback || !$.trim(cfg.callback)) throw('Required callback!');
+                    if (!cfg.path || !$.trim(cfg.path)) {
+                        throw('Required path!');
+                    }
+                    if (!cfg.callback || !$.trim(cfg.callback)) {
+                        cfg.callback = cfgName + 'Result';
+                    }
 
                     var config = Object.assign(defcfg, cfg);
 
-                    if(!config.method || !$.trim(config.method) ||
-                        $.trim(config.method).toLocaleLowerCase() === 'get') {
-                        if(config.params && $.trim(config.params)) {
+                    if (beforeFunc && beforeFunc instanceof Function) {
+                        beforeFunc.call(this, config);
+                    }
+
+                    if (!config.method || !$.trim(config.method) ||
+                        'get' === $.trim(config.method).toLocaleLowerCase()) {
+                        if (config.params && $.trim(config.params)) {
                             $.get(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
-                                'json');
+                                config.callback instanceof Function ?
+                                    config.callback : this.proxy(this[config.callback]), 'json');
                         } else {
                             $.get(config.path,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
-                                'json');
+                                config.callback instanceof Function ?
+                                    config.callback : this.proxy(this[config.callback]), 'json');
                         }
                     } else {
-                        if(config.params && $.trim(config.params)) {
+                        if (config.params && $.trim(config.params)) {
                             $.post(config.path, config.params,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
-                                'json');
+                                config.callback instanceof Function ?
+                                    config.callback : this.proxy(this[config.callback]), 'json');
                         } else {
                             $.post(config.path,
-                                config.callback instanceof Function ? config.callback : this.proxy(this[config.callback]),
-                                'json');
+                                config.callback instanceof Function ?
+                                    config.callback : this.proxy(this[config.callback]), 'json');
                         }
                     }
                 }
@@ -552,7 +877,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _CElement = org.eocencle.sepa.CElement = new _Class();
+    var _CElement = org.eocencle.sepa.CElement = new _Class;
 
     _CElement.extend({
         _component : {
@@ -595,10 +920,11 @@
                         ul : '<ul></ul>',
                         ol : '<ol></ol>',
                         li : '<li></li>',
-                        label : '<label></label>'
+                        label : '<label></label>',
+                        cite : '<cite></cite>'
                     };
 
-                    if(elName && $.trim(elName)) {
+                    if (elName && $.trim(elName)) {
                         if(defEl[elName])
                             return $(defEl[elName]);
                     } else {
@@ -615,7 +941,7 @@
      * @type {org.eocencle.sepa.Class}
      * @private
      */
-    var _CVaildate = org.eocencle.sepa.CVaildate = new _Class();
+    var _CVaildate = org.eocencle.sepa.CVaildate = new _Class;
 
     _CVaildate.extend({
         _component : {
@@ -643,9 +969,9 @@
                     var rule = $.trim(arguments[0]);
                     var errMsg = arguments[1];
                     var params = Array.prototype.slice.call(arguments,2);
-                    if(rule && defMsg[rule]) {
-                        if (rule === 'remote' ? this.component('chkRemote', params)
-                                : this.component(rule, params)) {
+                    if (rule && defMsg[rule]) {
+                        if (rule === 'remote' ? this.comp('chkRemote', params)
+                                : this.comp(rule, params)) {
                             return '';
                         } else {
                             if (!errMsg || !$.trim(errMsg)) {
@@ -672,7 +998,9 @@
 
                     config.path = path;
                     config.callback = this.proxy(function(data) {
-                        if(data.result) this.config[cfgName].check = 1;
+                        if (data.result) {
+                            this.config[cfgName].check = 1;
+                        }
                     });
 
                     this.config[cfgName] = config;
@@ -681,20 +1009,23 @@
                         var cfgName = '_chk' + name;
                         var cfg = this.config[cfgName];
 
-                        if(!cfg) throw('No configuration!');
+                        if (!cfg) {
+                            throw ReferenceError('Configuration of #' + cfgName + ' is not found!');
+                        }
 
-                        cfg.check = 0;
-                        cfg.params[name] = $el.val();
-
-                        this.component('remote', [cfgName]);
+                        this.comp('remote', [cfgName, function(config) {
+                            config.check = 0;
+                            config.params[name] = $el.val();
+                        }]);
                     });
 
                     return func;
                 },
 
                 required: function(value) {
-                    if (!value || !$.trim(value))
+                    if (!value || !$.trim(value)) {
                         return false;
+                    }
                     return true;
                 },
                 email: function(value) {
@@ -729,7 +1060,7 @@
                     try {
                         max = parseInt(maxlen);
                     } catch (e) {
-                        throw('maxlength:类型转换错误！');
+                        throw TypeError('maxlength:Type paser error!');
                     }
                     return value.length <= maxlen;
                 },
@@ -738,7 +1069,7 @@
                     try {
                         min = parseInt(minlen);
                     } catch (e) {
-                        throw('minlength:类型转换错误！');
+                        throw TypeError('minlength:Type paser error!');
                     }
                     return minlen <= value.length;
                 },
@@ -749,7 +1080,7 @@
                         min = parseInt(sp[0]);
                         max = parseInt(sp[1]);
                     } catch (e) {
-                        throw('rangelength:类型转换错误！');
+                        throw TypeError('rangelength:Type paser error!');
                     }
                     return min <= value.length && value.length <= max;
                 },
@@ -761,7 +1092,7 @@
                         max = parseInt(sp[1]);
                         val = parseInt(value);
                     } catch (e) {
-                        throw('range:类型转换错误！');
+                        throw TypeError('range:Type paser error!');
                     }
                     return min <= val && val <= max;
                 },
@@ -771,7 +1102,7 @@
                         m = parseInt(max);
                         v = parseInt(value);
                     } catch (e) {
-                        throw('max:类型转换错误！');
+                        throw TypeError('max:Type paser error!');
                     }
                     return v < m;
                 },
@@ -781,7 +1112,7 @@
                         m = parseInt(min);
                         v = parseInt(value);
                     } catch (e) {
-                        throw('min:类型转换错误！');
+                        throw TypeError('min:Type paser error!');
                     }
                     return m < v;
                 },
@@ -790,50 +1121,10 @@
                     return chk.test(value);
                 },
                 chkRemote: function (name) {
-                    if (this.config['_chk' + name].check) return true;
-                    else return false;
-                }
-            }
-        }
-    });
-
-    /**
-     * Storage model
-     * 本地存储模块
-     * @type {org.eocencle.sepa.Class}
-     * @private
-     */
-    var _CStorage = org.eocencle.sepa.CStorage = new _Class();
-
-    _CStorage.extend({
-        _component: {
-            _common: {
-                saveLocal : function(name, data) {
-                    localStorage[name] = JSON.stringify(data);
-                },
-
-                loadLocal : function(name) {
-                    var d = localStorage[name];
-                    if(d == undefined) return d;
-                    return JSON.parse(d);
-                },
-
-                removeLocal : function(name) {
-                    localStorage.removeItem(name);
-                },
-
-                saveSession : function(name, data) {
-                    sessionStorage[name] = JSON.stringify(data);
-                },
-
-                loadSession : function(name) {
-                    var d = sessionStorage[name];
-                    if(d == undefined) return d;
-                    return JSON.parse(d);
-                },
-
-                removeSession : function(name) {
-                    sessionStorage.removeItem(name);
+                    if (this.config['_chk' + name].check) {
+                        return true;
+                    }
+                    return false;
                 }
             }
         }
