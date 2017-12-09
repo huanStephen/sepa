@@ -1,5 +1,6 @@
 # sepa
-Sepa is a MVC framework that about javascript.
+Sepa is a MVC framework that about javascript.  
+![](http://images.cnblogs.com/cnblogs_com/huanStephen/1128725/o_sepa-small.jpg)
 
 # Design points :
  *  1、The namespace, to avoid naming conflicts.
