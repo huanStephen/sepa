@@ -5,7 +5,7 @@
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-1-12
- * Update:  2017-10-12
+ * Update:  2018-3-22
  */
 (function($) {
 
