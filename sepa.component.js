@@ -5,7 +5,7 @@
  * Author:  huanStephen
  * License: MIT
  * Date:    2017-4-27
- * Update:  2017-9-24
+ * Update:  2017-10-30
  */
 (function() {
     var sepa = org.eocencle.sepa;
@@ -44,8 +44,9 @@
                                 var type = $el.attr('type');
                                 if ('radio' === type) {
                                     if (isRead) {
-                                        if ($el.attr('checked')) {
-                                            result += $el.val() + ',';
+                                        var $radio = $('input[name="' + $el.attr('name') + '"]:checked');
+                                        if (0 != $radio.length) {
+                                            result = $radio.val();
                                         }
                                     } else {
                                         if ($el.val() == value) {
@@ -56,9 +57,7 @@
                                     }
                                 } else if ('checkbox' === type) {
                                     if (isRead) {
-                                        if ($el.attr('checked')) {
-                                            result += $el.val() + ',';
-                                        }
+                                        result += $el.is(':checked') ? ($el.val() + ',') : '';
                                     } else {
                                         var vals = value.split(',');
                                         vals.forEach(function(val, idx, arr) {
@@ -91,7 +90,7 @@
                     });
 
                     if (isRead) {
-                        if ('' !== result) {
+                        if ('' !== result && ',' == result.charAt(result.length - 1)) {
                             result = result.substring(0, result.length - 1);
                         }
                         return result;

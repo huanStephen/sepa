@@ -1061,6 +1061,7 @@
                     return chk.test(value);
                 },
                 number: function (value) {
+                    value = $.trim(value);
                     var chk = /^(?:-?\d+|-?\d{1,3}(?:,\d{3})+)?(?:\.\d+)?$/;
                     return chk.test(value);
                 },
