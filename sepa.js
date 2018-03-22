@@ -88,8 +88,14 @@
             return obj2;
         };
 
+        klass.resetStrut = function() {};
+
         if (parent) {
             if (parent instanceof Array) {
+                parent.forEach(function(val, idx, arr) {
+                    val.resetStrut();
+                });
+
                 var classes = new Array;
                 var sup = null;
                 parent.forEach(function(val, idx, arr) {
@@ -119,6 +125,8 @@
 
                 parent = sup;
             }
+
+            parent.resetStrut();
 
             for (var i in parent) {
                 klass[i] = klass._merge(klass[i], parent[i]);
@@ -185,11 +193,11 @@
     };
 
     /**
-    * Finite state machine
-    * 有限状态机
-    * @type {Function}
-    * @private
-    */
+     * Finite state machine
+     * 有限状态机
+     * @type {Function}
+     * @private
+     */
     var _StateMachine = org.eocencle.sepa.StateMachine = new _Class;
 
     _StateMachine.include({
@@ -266,6 +274,14 @@
         _records : {},
         //排序
         _sort : [],
+
+        /**
+         * 初始化结构
+         */
+        resetStrut : function() {
+            this._records = {};
+            this._sort = [];
+        },
 
         /**
          * 创建数据模型
@@ -663,10 +679,10 @@
                                     v = '';
                                     $('input[type="checkbox"][name="' + $(event.target).attr('name') + '"]',
                                         this._context._el).each(function() {
-                                            if (this.checked) {
-                                                v += $(this).val() + ',';
-                                            }
-                                        });
+                                        if (this.checked) {
+                                            v += $(this).val() + ',';
+                                        }
+                                    });
                                     if (v) {
                                         v = v.substring(0, v.length - 1);
                                     }

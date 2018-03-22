@@ -819,3 +819,27 @@
 
     new Ctrl('div.mvvm');
 })();
+
+(function() {
+    var sepa = org.eocencle.sepa;
+
+    var UserInfo = new sepa.Class(sepa.BaseModel);
+    UserInfo.create(['id', 'name', 'age', 'sex', 'hobby']);
+
+    var UserEntity = new sepa.Class([UserInfo, sepa.Model]);
+
+    var user = new UserEntity({id : 1, name : '张三', age : 18, sex : '男', hobby : '篮球'});
+    user.save();
+
+    console.table(UserEntity.all());
+
+    var User = new sepa.Class([UserInfo, sepa.Model]);
+
+    var u = new User({id : 2, name : '李四', age : 20, sex : '女', hobby : '游泳'});
+    u.save();
+
+    var u1 = new User({id : 3, name : '王五', age : 24, sex : '男', hobby : '足球'});
+    u1.save();
+
+    console.table(User.all());
+})();
