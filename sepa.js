@@ -765,10 +765,17 @@
         // 根据->来分隔
         _eventSplitter : '->',
 
+        // 兼容第一个空格来分隔
+        _compatibleSplitter : /^(\w+)\s*(.*)$/,
+
         _delegateEvents: function() {
             for(var key in this.events) {
                 var methodName = this.events[key];
                 var match = key.split(this._eventSplitter);
+                if (1 == match.length) {
+                    match = key.match(this._compatibleSplitter);
+                    match.shift();
+                }
                 var eventName = null, selector = null;
                 if (2 == match.length) {
                     eventName = match[0];

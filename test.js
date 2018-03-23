@@ -842,4 +842,23 @@
     u1.save();
 
     console.table(User.all());
+
+    var Ctrl = new sepa.Class(sepa.Controller);
+
+    Ctrl.include({
+        events : {
+            'click->input.ok' : 'okClick',
+            'click input.yes' : 'yesClick'
+        },
+
+        okClick : function(event) {
+            alert('OK');
+        },
+
+        yesClick : function(event) {
+            alert('YES');
+        }
+    });
+
+    new Ctrl('div.compatible');
 })();
