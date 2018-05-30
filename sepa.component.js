@@ -35,9 +35,17 @@
                         var $el = $(el);
                         if (attr) {
                             if (isRead) {
-                                result += $el.attr(attr) + ',';
+                                if ('html' == attr) {
+                                    result += $el.html() + ',';
+                                } else {
+                                    result += $el.attr(attr) + ',';
+                                }
                             } else {
-                                $el.attr(attr, value);
+                                if ('html' == attr) {
+                                    $el.html(value);
+                                } else {
+                                    $el.attr(attr, value);
+                                }
                             }
                         } else {
                             if ('INPUT' === el.nodeName) {
